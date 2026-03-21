@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathBros - Tablas de Multiplicar</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700&display=swap');
+
+  :root {
+    --sky: #5c94fc;
+    --ground: #c84c0c;
+    --ground-top: #6aaa40;
+    --mario-red: #e52222;
+    --mario-blue: #2038ec;
+    --coin: #f8d038;
+    --brick: #c84c0c;
+    --cloud: #ffffff;
+    --pipe: #00a800;
+    --text-light: #ffffff;
+    --ui-dark: #000000;
+    --correct: #00c800;
+    --wrong: #e52222;
+    --stars: #f8d038;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--sky);
+    font-family: 'Press Start 2P', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* PIXEL STARS BG */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(1px 1px at 10% 20%, white 1px, transparent 0),
+      radial-gradient(1px 1px at 30% 60%, white 1px, transparent 0),
+      radial-gradient(1px 1px at 70% 15%, white 1px, transparent 0),
+      radial-gradient(1px 1px at 85% 75%, white 1px, transparent 0),
+      radial-gradient(1px 1px at 50% 40%, white 1px, transparent 0);
+    pointer-events: none;
+    opacity: 0.3;
+  }
+
+  #game-wrapper {
+    width: 100%;
+    max-width: 860px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+
+  /* PLAYER BANNER */
+  #player-banner {
+    background: #000;
+    border-bottom: 3px solid #e52222;
+    text-align: center;
+    padding: 7px 10px;
+  }
+  #player-banner-inner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+  }
+  .banner-item {
+    color: var(--coin);
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-shadow: 2px 2px 0 #c84c0c;
+  }
+  .banner-item span { color: #fff; }
+
+  /* HUD */
+  #hud {
+    background: #000;
+    color: var(--coin);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    border-bottom: 4px solid var(--coin);
+    letter-spacing: 1px;
+  }
+
+  #hud .score-block { display: flex; flex-direction: column; gap: 4px; text-align: center; }
+  #hud .score-block span:first-child { color: #aaa; font-size: 8px; }
+  #hud .score-block span:last-child { color: #fff; font-size: 12px; }
+
+  /* GAME CANVAS AREA */
+  #game-canvas {
+    position: relative;
+    height: 340px;
+    background: linear-gradient(180deg, #5c94fc 0%, #7ab0ff 80%, #5c94fc 100%);
+    overflow: hidden;
+    border-left: 4px solid #000;
+    border-right: 4px solid #000;
+  }
+
+  /* CLOUDS */
+  .cloud {
+    position: absolute;
+    top: 40px;
+    background: white;
+    border-radius: 20px;
+    animation: cloudMove linear infinite;
+    opacity: 0.9;
+  }
+  .cloud::before, .cloud::after {
+    content: '';
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+  }
+  .cloud::before { width: 60%; height: 150%; top: -60%; left: 10%; }
+  .cloud::after  { width: 40%; height: 130%; top: -40%; right: 10%; }
+
+  .cloud1 { width: 80px; height: 28px; top: 30px; animation-duration: 20s; }
+  .cloud2 { width: 60px; height: 22px; top: 70px; animation-duration: 28s; animation-delay: -10s; }
+  .cloud3 { width: 100px; height: 34px; top: 20px; animation-duration: 25s; animation-delay: -6s; }
+
+  @keyframes cloudMove {
+    from { left: 110%; }
+    to   { left: -150px; }
+  }
+
+  /* GROUND */
+  #ground {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 60px;
+    background: var(--ground);
+    border-top: 8px solid var(--ground-top);
+  }
+
+  /* Ground texture blocks */
+  #ground::after {
+    content: '';
+    position: absolute;
+    top: 8px; left: 0; right: 0; height: 10px;
+    background: repeating-linear-gradient(90deg, rgba(0,0,0,0.15) 0, rgba(0,0,0,0.15) 2px, transparent 2px, transparent 40px);
+  }
+
+  /* PROGRESS PATH */
+  #progress-bar-track {
+    position: absolute;
+    bottom: 68px;
+    left: 10px;
+    right: 10px;
+    height: 8px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  #progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--coin), #ff8800);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+
+  /* FLAG at the end */
+  #flag {
+    position: absolute;
+    right: 30px;
+    bottom: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  #flag-pole {
+    width: 4px;
+    height: 120px;
+    background: #888;
+    margin: 0 auto;
+  }
+  #flag-banner {
+    width: 24px;
+    height: 18px;
+    background: var(--pipe);
+    position: absolute;
+    top: 0;
+    left: 4px;
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+  }
+  #flag-star {
+    font-size: 16px;
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* MARIO CHARACTER */
+  #mario {
+    position: absolute;
+    bottom: 60px;
+    left: 30px;
+    width: 40px;
+    height: 48px;
+    transition: left 0.5s ease;
+    z-index: 10;
+    image-rendering: pixelated;
+  }
+
+  #mario.jumping {
+    animation: jump 0.5s ease;
+  }
+
+  #mario.hurt {
+    animation: hurt 0.4s ease;
+  }
+
+  @keyframes jump {
+    0%   { transform: translateY(0); }
+    40%  { transform: translateY(-80px); }
+    100% { transform: translateY(0); }
+  }
+
+  @keyframes hurt {
+    0%   { transform: translateX(0); filter: brightness(1); }
+    25%  { transform: translateX(-15px); filter: brightness(3) hue-rotate(30deg); }
+    50%  { transform: translateX(0); filter: brightness(1); }
+    75%  { transform: translateX(-10px); filter: brightness(2); }
+    100% { transform: translateX(0); filter: brightness(1); }
+  }
+
+  /* MARIO SVG styles */
+  .mario-svg { width: 40px; height: 48px; }
+
+  /* PIPES */
+  .pipe {
+    position: absolute;
+    bottom: 60px;
+    width: 40px;
+    background: var(--pipe);
+    border: 3px solid #006400;
+    border-radius: 4px 4px 0 0;
+  }
+  .pipe::before {
+    content: '';
+    position: absolute;
+    top: -8px; left: -5px; right: -5px; height: 14px;
+    background: #00a800;
+    border: 3px solid #006400;
+    border-radius: 4px;
+  }
+  .pipe1 { height: 50px; left: 20%; }
+  .pipe2 { height: 65px; left: 50%; }
+  .pipe3 { height: 45px; left: 75%; }
+
+  /* FLOATING COINS */
+  .coin-anim {
+    position: absolute;
+    font-size: 20px;
+    animation: coinUp 0.8s ease forwards;
+    pointer-events: none;
+    z-index: 20;
+  }
+  @keyframes coinUp {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-60px) scale(1.5); }
+  }
+
+  /* QUESTION BLOCK */
+  #question-area {
+    background: #000;
+    border-top: 4px solid var(--coin);
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #question-title {
+    color: var(--coin);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-align: center;
+  }
+
+  #question-text {
+    color: white;
+    font-size: 20px;
+    text-align: center;
+    letter-spacing: 2px;
+    text-shadow: 3px 3px 0 #333;
+  }
+
+  #answers-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    width: 100%;
+    max-width: 600px;
+  }
+
+  .answer-btn {
+    background: var(--mario-blue);
+    color: white;
+    border: 3px solid #fff;
+    padding: 10px 4px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.1s, background 0.1s;
+    image-rendering: pixelated;
+    outline: none;
+    position: relative;
+    box-shadow: 0 4px 0 #001080;
+  }
+
+  .answer-btn:hover {
+    background: #3050ff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #001080;
+  }
+  .answer-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #001080;
+  }
+
+  .answer-btn.correct {
+    background: var(--correct) !important;
+    border-color: #00ff00;
+    box-shadow: 0 0 12px #00ff00;
+    animation: correctPulse 0.4s ease;
+  }
+  .answer-btn.wrong {
+    background: var(--wrong) !important;
+    border-color: #ff0000;
+    animation: shake 0.4s ease;
+  }
+
+  @keyframes correctPulse {
+    0%  { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100%{ transform: scale(1); }
+  }
+
+  @keyframes shake {
+    0%,100%{ transform: translateX(0); }
+    25%    { transform: translateX(-6px); }
+    75%    { transform: translateX(6px); }
+  }
+
+  /* FEEDBACK */
+  #feedback {
+    font-size: 13px;
+    min-height: 20px;
+    text-align: center;
+    transition: color 0.2s;
+    letter-spacing: 1px;
+  }
+
+  /* LIVES */
+  #lives-display { display: flex; gap: 6px; align-items: center; }
+  .heart { font-size: 14px; }
+
+  /* OVERLAY */
+  #overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 100;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    font-family: 'Press Start 2P', monospace;
+  }
+  #overlay.show { display: flex; }
+
+  #overlay-title {
+    font-size: 24px;
+    color: var(--coin);
+    text-shadow: 4px 4px 0 #333;
+    text-align: center;
+    line-height: 1.6;
+  }
+  #overlay-sub {
+    font-size: 11px;
+    color: #fff;
+    text-align: center;
+    line-height: 2;
+  }
+  #overlay-btn {
+    background: var(--mario-red);
+    color: white;
+    border: 4px solid white;
+    padding: 12px 24px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #800;
+    transition: transform 0.1s;
+    margin-top: 10px;
+  }
+  #overlay-btn:hover { transform: scale(1.05); }
+  #overlay-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #800; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    #answers-grid { grid-template-columns: repeat(2, 1fr); }
+    #question-text { font-size: 16px; }
+    #game-canvas { height: 260px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="game-wrapper">
+
+  <!-- PLAYER BANNER -->
+  <div id="player-banner">
+    <div id="player-banner-inner">
+      <span class="banner-item">🍄 ¡A JUGAR <span>DANIEL SALAZAR</span>! 🍄</span>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="score-block">
+      <span>PUNTOS</span>
+      <span id="score-display">000000</span>
+    </div>
+    <div id="lives-display">
+      <span class="heart">❤️</span>
+      <span class="heart">❤️</span>
+      <span class="heart">❤️</span>
+    </div>
+    <div class="score-block">
+      <span>META</span>
+      <span id="progress-display">0%</span>
+    </div>
+    <div class="score-block">
+      <span>TABLA</span>
+      <span id="table-display">x1-x5</span>
+    </div>
+  </div>
+
+  <!-- GAME CANVAS -->
+  <div id="game-canvas">
+    <!-- Clouds -->
+    <div class="cloud cloud1"></div>
+    <div class="cloud cloud2"></div>
+    <div class="cloud cloud3"></div>
+
+    <!-- Pipes -->
+    <div class="pipe pipe1"></div>
+    <div class="pipe pipe2"></div>
+    <div class="pipe pipe3"></div>
+
+    <!-- Progress track -->
+    <div id="progress-bar-track">
+      <div id="progress-fill"></div>
+    </div>
+
+    <!-- Ground -->
+    <div id="ground"></div>
+
+    <!-- Flag -->
+    <div id="flag">
+      <div id="flag-banner"></div>
+      <div id="flag-pole"></div>
+      <div id="flag-star">⭐</div>
+    </div>
+
+    <!-- Mario -->
+    <div id="mario">
+      <svg class="mario-svg" viewBox="0 0 40 48" xmlns="http://www.w3.org/2000/svg" id="mario-svg">
+        <!-- Hat -->
+        <rect x="10" y="2" width="22" height="6" fill="#e52222"/>
+        <rect x="6" y="8" width="30" height="4" fill="#e52222"/>
+        <!-- Face -->
+        <rect x="8" y="12" width="24" height="14" fill="#f4a050"/>
+        <!-- Eyes -->
+        <rect x="14" y="14" width="4" height="4" fill="#000"/>
+        <rect x="22" y="14" width="4" height="4" fill="#000"/>
+        <!-- Mustache -->
+        <rect x="10" y="20" width="20" height="3" fill="#5a2800"/>
+        <!-- Body -->
+        <rect x="6" y="26" width="28" height="12" fill="#2038ec"/>
+        <!-- Buttons -->
+        <rect x="18" y="27" width="4" height="3" fill="#f4a050"/>
+        <!-- Arms -->
+        <rect x="0" y="26" width="6" height="8" fill="#e52222"/>
+        <rect x="34" y="26" width="6" height="8" fill="#e52222"/>
+        <!-- Hands -->
+        <rect x="0" y="34" width="6" height="4" fill="#f4a050"/>
+        <rect x="34" y="34" width="6" height="4" fill="#f4a050"/>
+        <!-- Legs -->
+        <rect x="8" y="38" width="10" height="8" fill="#c84c0c"/>
+        <rect x="22" y="38" width="10" height="8" fill="#c84c0c"/>
+        <!-- Shoes -->
+        <rect x="6" y="44" width="12" height="4" fill="#5a2800"/>
+        <rect x="22" y="44" width="12" height="4" fill="#5a2800"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- QUESTION AREA -->
+  <div id="question-area">
+    <div id="question-title">¡RESPONDE PARA AVANZAR!</div>
+    <div id="question-text">¿Cuánto es <span id="q-num">3 × 4</span>?</div>
+    <div id="answers-grid"></div>
+    <div id="feedback" style="color:#fff;">Elige la respuesta correcta para que Mario avance 🍄</div>
+  </div>
+
+</div>
+
+<!-- OVERLAY -->
+<div id="overlay">
+  <div id="overlay-title"></div>
+  <div id="overlay-sub"></div>
+  <button id="overlay-btn" onclick="startGame()">▶ JUGAR DE NUEVO</button>
+</div>
+
+<script>
+// ===================== GAME STATE =====================
+let score = 0;
+let lives = 3;
+let progress = 0; // 0 to 100
+let currentQuestion = null;
+let answering = true;
+const MARIO_MIN_LEFT = 30;    // px from left
+const MARIO_MAX_LEFT = 760;   // px from left (near flag)
+const STEP_FORWARD = 4;       // % per correct answer
+const STEP_BACKWARD = 3;      // % per wrong answer
+
+// ===================== MULTIPLICATION TABLES =====================
+function generateQuestion() {
+  const a = Math.floor(Math.random() * 5) + 1; // 1–5
+  const b = Math.floor(Math.random() * 10) + 1; // 1–10
+  const correct = a * b;
+
+  // Generate 3 wrong answers (unique, plausible)
+  const wrongs = new Set();
+  while (wrongs.size < 3) {
+    let w = correct + (Math.floor(Math.random() * 10) - 5);
+    if (w > 0 && w !== correct) wrongs.add(w);
+  }
+
+  const options = [...wrongs, correct].sort(() => Math.random() - 0.5);
+  return { a, b, correct, options };
+}
+
+// ===================== RENDER QUESTION =====================
+function renderQuestion() {
+  if (!answering) return;
+  currentQuestion = generateQuestion();
+  document.getElementById('q-num').textContent = `${currentQuestion.a} × ${currentQuestion.b}`;
+  document.getElementById('feedback').textContent = 'Elige la respuesta correcta para que Mario avance 🍄';
+  document.getElementById('feedback').style.color = '#fff';
+
+  const grid = document.getElementById('answers-grid');
+  grid.innerHTML = '';
+  currentQuestion.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.textContent = opt;
+    btn.onclick = () => handleAnswer(opt, btn);
+    grid.appendChild(btn);
+  });
+}
+
+// ===================== HANDLE ANSWER =====================
+function handleAnswer(chosen, btn) {
+  if (!answering) return;
+  answering = false;
+
+  const allBtns = document.querySelectorAll('.answer-btn');
+  allBtns.forEach(b => b.disabled = true);
+
+  const isCorrect = chosen === currentQuestion.correct;
+
+  if (isCorrect) {
+    btn.classList.add('correct');
+    score += currentQuestion.a * currentQuestion.b * 10;
+    updateScore();
+    showFeedback(`✅ ¡Correcto! ${currentQuestion.a} × ${currentQuestion.b} = ${currentQuestion.correct}`, '#00ff00');
+    spawnCoin();
+    marioJump();
+    progress = Math.min(100, progress + STEP_FORWARD);
+    updateProgress();
+
+    if (progress >= 100) {
+      setTimeout(showWin, 1000);
+      return;
+    }
+  } else {
+    btn.classList.add('wrong');
+    // Highlight correct
+    allBtns.forEach(b => {
+      if (parseInt(b.textContent) === currentQuestion.correct) b.classList.add('correct');
+    });
+    lives--;
+    updateLives();
+    showFeedback(`❌ Era ${currentQuestion.correct}. Mario retrocede...`, '#ff4444');
+    marioHurt();
+    progress = Math.max(0, progress - STEP_BACKWARD);
+    updateProgress();
+
+    if (lives <= 0) {
+      setTimeout(showGameOver, 1200);
+      return;
+    }
+  }
+
+  setTimeout(() => {
+    answering = true;
+    renderQuestion();
+  }, 1200);
+}
+
+// ===================== MARIO ANIMATIONS =====================
+function marioJump() {
+  const mario = document.getElementById('mario');
+  mario.classList.remove('jumping', 'hurt');
+  void mario.offsetWidth;
+  mario.classList.add('jumping');
+  mario.addEventListener('animationend', () => mario.classList.remove('jumping'), { once: true });
+}
+
+function marioHurt() {
+  const mario = document.getElementById('mario');
+  mario.classList.remove('jumping', 'hurt');
+  void mario.offsetWidth;
+  mario.classList.add('hurt');
+  mario.addEventListener('animationend', () => mario.classList.remove('hurt'), { once: true });
+}
+
+// ===================== PROGRESS / MARIO POSITION =====================
+function updateProgress() {
+  document.getElementById('progress-fill').style.width = progress + '%';
+  document.getElementById('progress-display').textContent = Math.round(progress) + '%';
+
+  const mario = document.getElementById('mario');
+  const canvasWidth = document.getElementById('game-canvas').offsetWidth;
+  const maxLeft = canvasWidth - 80;
+  const left = MARIO_MIN_LEFT + ((maxLeft - MARIO_MIN_LEFT) * progress / 100);
+  mario.style.left = left + 'px';
+}
+
+// ===================== SCORE =====================
+function updateScore() {
+  document.getElementById('score-display').textContent = String(score).padStart(6, '0');
+}
+
+// ===================== LIVES =====================
+function updateLives() {
+  const hearts = document.querySelectorAll('.heart');
+  hearts.forEach((h, i) => {
+    h.textContent = i < lives ? '❤️' : '🖤';
+  });
+}
+
+// ===================== FEEDBACK =====================
+function showFeedback(msg, color) {
+  const el = document.getElementById('feedback');
+  el.textContent = msg;
+  el.style.color = color;
+}
+
+// ===================== COIN ANIMATION =====================
+function spawnCoin() {
+  const mario = document.getElementById('mario');
+  const rect = mario.getBoundingClientRect();
+  const canvas = document.getElementById('game-canvas').getBoundingClientRect();
+
+  const coin = document.createElement('div');
+  coin.className = 'coin-anim';
+  coin.textContent = '🪙';
+  coin.style.left = (mario.offsetLeft + 10) + 'px';
+  coin.style.bottom = '100px';
+  document.getElementById('game-canvas').appendChild(coin);
+  setTimeout(() => coin.remove(), 900);
+}
+
+// ===================== WIN / GAME OVER =====================
+function showWin() {
+  const overlay = document.getElementById('overlay');
+  document.getElementById('overlay-title').textContent = '🏆 ¡GANASTE! 🏆';
+  document.getElementById('overlay-sub').innerHTML =
+    `¡DANIEL SALAZAR llegó a la meta!\nPuntos: ${String(score).padStart(6,'0')}\n¡Eres un crack en las tablas! 🏆`;
+  overlay.classList.add('show');
+}
+
+function showGameOver() {
+  const overlay = document.getElementById('overlay');
+  document.getElementById('overlay-title').textContent = '💀 GAME OVER 💀';
+  document.getElementById('overlay-sub').innerHTML =
+    `¡Ánimo DANIEL SALAZAR!\nPerdiste todas las vidas...\nPuntos: ${String(score).padStart(6,'0')}\n¡Practica las tablas e inténtalo de nuevo!`;
+  overlay.classList.add('show');
+}
+
+// ===================== START / RESTART =====================
+function startGame() {
+  score = 0;
+  lives = 3;
+  progress = 0;
+  answering = true;
+
+  document.getElementById('overlay').classList.remove('show');
+  updateScore();
+  updateLives();
+  updateProgress();
+
+  const mario = document.getElementById('mario');
+  mario.classList.remove('jumping', 'hurt');
+  mario.style.left = MARIO_MIN_LEFT + 'px';
+
+  renderQuestion();
+}
+
+// Boot
+startGame();
+</script>
+</body>
+</html>
