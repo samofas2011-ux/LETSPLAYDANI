@@ -416,6 +416,23 @@
   #overlay-btn:hover { transform: scale(1.05); }
   #overlay-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #800; }
 
+  /* SESSION BAR */
+  #session-bar {
+    background: #111;
+    border-bottom: 3px solid #333;
+    padding: 6px 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    font-size: 9px;
+    color: #aaa;
+    letter-spacing: 1px;
+  }
+  .session-item { color: #fff; }
+  .session-item span { color: var(--coin); font-size: 11px; }
+  .session-sep { color: #444; }
+
   /* Responsive */
   @media (max-width: 600px) {
     #answers-grid { grid-template-columns: repeat(2, 1fr); }
@@ -445,6 +462,8 @@
       <span class="heart">❤️</span>
       <span class="heart">❤️</span>
       <span class="heart">❤️</span>
+      <span class="heart">❤️</span>
+      <span class="heart">❤️</span>
     </div>
     <div class="score-block">
       <span>META</span>
@@ -454,6 +473,13 @@
       <span>TABLA</span>
       <span id="table-display">x1-x5</span>
     </div>
+  </div>
+  <!-- SESSION COUNTER -->
+  <div id="session-bar">
+    <span>SESIÓN HOY:</span>
+    <span class="session-item">🏆 VICTORIAS <span id="wins-count">0</span></span>
+    <span class="session-sep">|</span>
+    <span class="session-item">💀 DERROTAS <span id="losses-count">0</span></span>
   </div>
 
   <!-- GAME CANVAS -->
@@ -536,10 +562,12 @@
 <script>
 // ===================== GAME STATE =====================
 let score = 0;
-let lives = 3;
+let lives = 5;
 let progress = 0; // 0 to 100
 let currentQuestion = null;
 let answering = true;
+let sessionWins = 0;
+let sessionLosses = 0;
 const MARIO_MIN_LEFT = 30;    // px from left
 const MARIO_MAX_LEFT = 760;   // px from left (near flag)
 const STEP_FORWARD = 4;       // % per correct answer
@@ -696,25 +724,29 @@ function spawnCoin() {
 
 // ===================== WIN / GAME OVER =====================
 function showWin() {
+  sessionWins++;
+  document.getElementById('wins-count').textContent = sessionWins;
   const overlay = document.getElementById('overlay');
   document.getElementById('overlay-title').textContent = '🏆 ¡GANASTE! 🏆';
   document.getElementById('overlay-sub').innerHTML =
-    `¡DANIEL SALAZAR llegó a la meta!\nPuntos: ${String(score).padStart(6,'0')}\n¡Eres un crack en las tablas! 🏆`;
+    `¡DANIEL SALAZAR llegó a la meta!\nPuntos: ${String(score).padStart(6,'0')}\n¡Eres un crack en las tablas! 🏆\n\n🏆 Victorias hoy: ${sessionWins}  💀 Derrotas: ${sessionLosses}`;
   overlay.classList.add('show');
 }
 
 function showGameOver() {
+  sessionLosses++;
+  document.getElementById('losses-count').textContent = sessionLosses;
   const overlay = document.getElementById('overlay');
   document.getElementById('overlay-title').textContent = '💀 GAME OVER 💀';
   document.getElementById('overlay-sub').innerHTML =
-    `¡Ánimo DANIEL SALAZAR!\nPerdiste todas las vidas...\nPuntos: ${String(score).padStart(6,'0')}\n¡Practica las tablas e inténtalo de nuevo!`;
+    `¡Ánimo DANIEL SALAZAR!\nPerdiste todas las vidas...\nPuntos: ${String(score).padStart(6,'0')}\n¡Practica las tablas e inténtalo de nuevo!\n\n🏆 Victorias hoy: ${sessionWins}  💀 Derrotas: ${sessionLosses}`;
   overlay.classList.add('show');
 }
 
 // ===================== START / RESTART =====================
 function startGame() {
   score = 0;
-  lives = 3;
+  lives = 5;
   progress = 0;
   answering = true;
 
