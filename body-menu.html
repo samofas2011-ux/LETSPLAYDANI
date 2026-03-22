@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cuerpo Humano 🫀</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+  :root { --bg:#0a1628; --card:#111e35; --text:#f0f9ff; --sub:#64748b; --gold:#fbbf24; }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); font-family:'Nunito',sans-serif; color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; }
+
+  /* bubbles bg */
+  body::before { content:''; position:fixed; inset:0; background:radial-gradient(ellipse 80% 50% at 20% 20%, rgba(56,189,248,0.08) 0,transparent 60%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(244,114,182,0.08) 0,transparent 60%); pointer-events:none; }
+
+  .back { position:absolute; top:20px; left:20px; background:rgba(255,255,255,0.08); border:2px solid rgba(255,255,255,0.15); color:#94a3b8; padding:8px 16px; border-radius:10px; font-weight:800; font-size:14px; cursor:pointer; text-decoration:none; transition:all .2s; }
+  .back:hover { background:rgba(255,255,255,0.15); color:#fff; }
+
+  header { text-align:center; margin-bottom:48px; }
+  .badge { display:inline-block; background:rgba(56,189,248,0.15); border:1px solid rgba(56,189,248,0.3); border-radius:100px; padding:5px 16px; font-size:11px; font-weight:800; letter-spacing:2px; color:#38bdf8; text-transform:uppercase; margin-bottom:14px; }
+  h1 { font-size:clamp(28px,5vw,48px); font-weight:900; background:linear-gradient(135deg,#fff,#38bdf8 50%,#a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:8px; }
+  .sub { font-size:15px; color:var(--sub); font-weight:700; }
+
+  .cards { display:flex; gap:28px; flex-wrap:wrap; justify-content:center; max-width:700px; }
+
+  .card { background:var(--card); border:3px solid; border-radius:24px; padding:36px 32px; cursor:pointer; text-decoration:none; color:var(--text); display:flex; flex-direction:column; align-items:center; gap:14px; width:280px; transition:transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s; text-align:center; position:relative; overflow:hidden; }
+  .card:hover { transform:translateY(-8px) scale(1.03); }
+  .card:active { transform:scale(.97); }
+
+  .card-bone { border-color:#d97706; }
+  .card-bone:hover { box-shadow:0 20px 60px rgba(217,119,6,.3); }
+  .card-bone::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(251,191,36,.06),transparent); }
+
+  .card-muscle { border-color:#e11d48; }
+  .card-muscle:hover { box-shadow:0 20px 60px rgba(225,29,72,.3); }
+  .card-muscle::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(252,165,165,.06),transparent); }
+
+  .emoji { font-size:64px; line-height:1; filter:drop-shadow(0 4px 12px rgba(0,0,0,.4)); }
+  .card-title { font-size:24px; font-weight:900; }
+  .card-bone .card-title { color:#fde68a; }
+  .card-muscle .card-title { color:#fca5a5; }
+  .card-desc { font-size:13px; color:var(--sub); font-weight:700; line-height:1.6; }
+  .pills { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+  .pill { font-size:10px; font-weight:800; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); padding:3px 10px; border-radius:100px; color:#94a3b8; }
+  .cta { font-size:14px; font-weight:900; padding:10px 22px; border-radius:12px; margin-top:4px; }
+  .card-bone .cta { background:rgba(251,191,36,.2); color:#fde68a; }
+  .card-muscle .cta { background:rgba(252,165,165,.2); color:#fca5a5; }
+</style>
+</head>
+<body>
+<a href="menu.html" class="back">← Menú</a>
+<header>
+  <div class="badge">🔬 Ciencias — Cuerpo Humano</div>
+  <h1>¿Qué hay dentro<br>de tu cuerpo? 🧬</h1>
+  <p class="sub">Elige qué quieres aprender hoy, Daniel</p>
+</header>
+<div class="cards">
+  <a href="bones-game.html" class="card card-bone">
+    <div class="emoji">🦴</div>
+    <div class="card-title">Sistema Óseo</div>
+    <div class="card-desc">Aprende los huesos del cuerpo humano. ¡Pon cada hueso en su lugar!</div>
+    <div class="pills">
+      <span class="pill">10 huesos</span>
+      <span class="pill">Arrastra y suelta</span>
+    </div>
+    <div class="cta">🎯 ¡Jugar huesos!</div>
+  </a>
+  <a href="muscles-game.html" class="card card-muscle">
+    <div class="emoji">💪</div>
+    <div class="card-title">Sistema Muscular</div>
+    <div class="card-desc">Descubre los músculos del cuerpo. ¡Ponlos donde corresponden!</div>
+    <div class="pills">
+      <span class="pill">10 músculos</span>
+      <span class="pill">Arrastra y suelta</span>
+    </div>
+    <div class="cta">💪 ¡Jugar músculos!</div>
+  </a>
+</div>
+</body>
+</html>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Los Músculos 💪</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+  :root { --bg:#1a0008; --red:#f43f5e; --pink:#fda4af; --cream:#fff1f2; --dark:#4c0519; }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); font-family:'Nunito',sans-serif; min-height:100vh; overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; background:radial-gradient(ellipse 70% 60% at 50% 0%, rgba(244,63,94,.1) 0,transparent 70%); pointer-events:none; }
+
+  .back { position:fixed; top:16px; left:16px; z-index:100; background:rgba(244,63,94,.15); border:2px solid rgba(244,63,94,.3); color:#fda4af; padding:8px 14px; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer; text-decoration:none; transition:all .2s; }
+  .back:hover { background:rgba(244,63,94,.3); }
+
+  #header { text-align:center; padding:20px 20px 10px; }
+  #header h1 { font-size:clamp(22px,4vw,36px); font-weight:900; color:var(--red); text-shadow:0 0 30px rgba(244,63,94,.5); margin-bottom:4px; }
+  #header p  { font-size:13px; color:#9f1239; font-weight:700; }
+
+  #prog-wrap { display:flex; align-items:center; gap:12px; padding:8px 24px; max-width:600px; margin:0 auto; }
+  #prog-track { flex:1; height:14px; background:#4c0519; border-radius:7px; overflow:hidden; border:2px solid #881337; }
+  #prog-bar   { height:100%; background:linear-gradient(90deg,#e11d48,var(--red)); border-radius:5px; width:0%; transition:width .5s ease; }
+  #prog-label { font-size:13px; font-weight:900; color:var(--red); white-space:nowrap; min-width:70px; text-align:right; }
+
+  #layout { display:flex; align-items:flex-start; justify-content:center; gap:20px; padding:10px 16px 20px; max-width:960px; margin:0 auto; flex-wrap:wrap; }
+
+  #tray { display:flex; flex-direction:column; gap:8px; width:170px; flex-shrink:0; }
+  #tray-title { font-size:12px; font-weight:900; letter-spacing:2px; color:#9f1239; text-transform:uppercase; text-align:center; padding:4px 0; }
+
+  .muscle-card {
+    background:#2d000e; border:2px solid #881337;
+    border-radius:14px; padding:10px 12px;
+    cursor:grab; user-select:none;
+    display:flex; align-items:center; gap:10px;
+    transition:transform .15s, box-shadow .15s, opacity .3s;
+  }
+  .muscle-card:hover { transform:translateY(-2px) scale(1.03); box-shadow:0 8px 24px rgba(0,0,0,.5); border-color:var(--red); }
+  .muscle-card:active { cursor:grabbing; transform:scale(.96); }
+  .muscle-card.placed  { opacity:.3; pointer-events:none; }
+  .muscle-card.dragging{ opacity:.35; }
+  .mc-icon { font-size:22px; flex-shrink:0; }
+  .mc-name { font-size:12px; font-weight:900; color:var(--cream); line-height:1.2; }
+
+  #body-area { position:relative; flex-shrink:0; }
+  #body-svg  { display:block; width:260px; height:auto; }
+
+  .dz {
+    position:absolute; border:3px dashed rgba(244,63,94,.35);
+    border-radius:10px; background:rgba(244,63,94,.04);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    cursor:crosshair; transition:all .2s; z-index:10;
+  }
+  .dz:hover:not(.done) { border-color:rgba(244,63,94,.7); background:rgba(244,63,94,.1); }
+  .dz.over  { border-color:var(--red); background:rgba(244,63,94,.18); border-style:solid; transform:scale(1.05); }
+  .dz.done  { border-style:solid; border-color:rgba(244,63,94,.5); background:rgba(244,63,94,.08); cursor:default; }
+  .dz.wrong { animation:dzShake .4s ease; border-color:#7c3aed; background:rgba(124,58,237,.1); }
+  @keyframes dzShake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-5px)} 40%,80%{transform:translateX(5px)} }
+
+  .dz-hint { font-size:10px; font-weight:800; color:rgba(244,63,94,.4); text-align:center; line-height:1.2; padding:2px; }
+  .dz-icon { font-size:22px; display:none; }
+  .dz.done .dz-hint { display:none; }
+  .dz.done .dz-icon { display:block; }
+
+  .dz-name { position:absolute; bottom:-20px; left:50%; transform:translateX(-50%); font-size:9px; font-weight:900; color:var(--red); white-space:nowrap; opacity:0; transition:opacity .2s; pointer-events:none; }
+  .dz:hover .dz-name, .dz.done .dz-name { opacity:1; }
+
+  #info-box { width:170px; flex-shrink:0; }
+  #info-card { background:#2d000e; border:2px solid #881337; border-radius:14px; padding:14px; min-height:120px; display:flex; flex-direction:column; gap:8px; }
+  #info-emoji { font-size:32px; }
+  #info-name  { font-size:14px; font-weight:900; color:var(--red); }
+  #info-fact  { font-size:12px; font-weight:700; color:#e11d48; line-height:1.5; }
+  #info-placeholder { font-size:12px; color:#881337; font-weight:700; text-align:center; padding:20px 0; }
+
+  #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#1a0008; border:2px solid var(--red); border-radius:12px; padding:10px 20px; font-size:13px; font-weight:800; color:var(--red); z-index:200; opacity:0; transition:opacity .3s; pointer-events:none; text-align:center; max-width:90vw; }
+  #toast.show { opacity:1; }
+
+  #win { display:none; position:fixed; inset:0; background:rgba(0,0,0,.9); z-index:300; flex-direction:column; align-items:center; justify-content:center; gap:16px; text-align:center; padding:20px; }
+  #win.show { display:flex; }
+  #win .big { font-size:64px; }
+  #win h2 { font-size:32px; font-weight:900; color:var(--red); text-shadow:0 0 30px rgba(244,63,94,.6); }
+  #win p  { font-size:15px; color:#e11d48; font-weight:700; max-width:320px; line-height:1.6; }
+  .win-btns { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:8px; }
+  .wbtn { padding:12px 24px; border:none; border-radius:12px; font-family:'Nunito',sans-serif; font-weight:900; font-size:15px; cursor:pointer; transition:transform .1s; }
+  .wbtn:hover { transform:scale(1.05); }
+  .wbtn-red  { background:var(--red); color:#fff; }
+  .wbtn-back { background:rgba(255,255,255,.1); color:#fff; border:2px solid rgba(255,255,255,.2); }
+  @keyframes fall { 0%{transform:translateY(-20px) rotate(0);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }
+</style>
+</head>
+<body>
+<a href="body-menu.html" class="back">← Volver</a>
+
+<div id="header">
+  <h1>💪 Los Músculos del Cuerpo</h1>
+  <p>Arrastra cada músculo a su lugar en el cuerpo</p>
+</div>
+
+<div id="prog-wrap">
+  <div id="prog-track"><div id="prog-bar"></div></div>
+  <div id="prog-label">0 de 10</div>
+</div>
+
+<div id="layout">
+  <div id="tray">
+    <div id="tray-title">💪 Músculos</div>
+  </div>
+
+  <div id="body-area">
+    <svg id="body-svg" viewBox="0 0 240 520" xmlns="http://www.w3.org/2000/svg" width="240" height="520">
+      <defs>
+        <linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#2d000e" stop-opacity=".9"/>
+          <stop offset="100%" stop-color="#1a0008" stop-opacity=".9"/>
+        </linearGradient>
+      </defs>
+      <ellipse cx="120" cy="46" rx="34" ry="40" fill="url(#bg2)" stroke="#881337" stroke-width="2"/>
+      <rect x="108" y="82" width="24" height="20" rx="6" fill="url(#bg2)" stroke="#881337" stroke-width="2"/>
+      <path d="M72,102 Q58,118 56,188 L56,284 Q58,302 120,306 Q182,302 184,284 L184,188 Q182,118 168,102 Z" fill="url(#bg2)" stroke="#881337" stroke-width="2"/>
+      <path d="M72,108 Q50,128 44,166 L38,238 Q36,254 48,256 L56,256 Q66,254 68,238 L72,166 Z" fill="url(#bg2)" stroke="#881337" stroke-width="2"/>
+      <path d="M168,108 Q190,128 196,166 L202,238 Q204,254 192,256 L184,256 Q174,254 172,238 L168,166 Z" fill="url(#bg2)" stroke="#881337" stroke-width="2"/>
+      <ellipse cx="47" cy="268" rx="12" ry="16" fill="url(#bg2)" stroke="#881337" stroke-width="2"/>
+      <ellipse cx="193" cy="268" rx="12" ry="16" fill="url(#bg2)" stroke="#881337" stroke-width="2"/>
+      <path d="M76,300 Q60,316 62,340 L80,358 Q120,368 160,358 L178,340 Q180,316 164,300 Z" fill="url(#bg2)" stroke="#881337" stroke-width="2"/>
+      <path d="M80,354 Q68,388 66,432 L64,480 Q63,494 78,496 L88,496 Q99,494 100,480 L102,432 Q104,388 96,354 Z" fill="url(#bg2)" stroke="#881337" stroke-width="2"/>
+      <path d="M160,354 Q172,388 174,432 L176,480 Q177,494 162,496 L152,496 Q141,494 140,480 L138,432 Q136,388 144,354 Z" fill="url(#bg2)" stroke="#881337" stroke-width="2"/>
+      <ellipse cx="82" cy="505" rx="22" ry="10" fill="url(#bg2)" stroke="#881337" stroke-width="2"/>
+      <ellipse cx="158" cy="505" rx="22" ry="10" fill="url(#bg2)" stroke="#881337" stroke-width="2"/>
+      <!-- muscle fiber hints -->
+      <line x1="88" y1="130" x2="88" y2="155" stroke="#4c0519" stroke-width="2" stroke-dasharray="4,4"/>
+      <line x1="152" y1="130" x2="152" y2="155" stroke="#4c0519" stroke-width="2" stroke-dasharray="4,4"/>
+      <line x1="120" y1="240" x2="120" y2="280" stroke="#4c0519" stroke-width="2" stroke-dasharray="4,4"/>
+    </svg>
+
+    <!-- DROP ZONES -->
+    <div class="dz" id="dz-pectorales"   style="left:76px;top:110px;width:88px;height:54px"   data-muscle="pectorales">  <div class="dz-icon">💪</div><div class="dz-hint">Pectorales</div><div class="dz-name">Pectorales</div></div>
+    <div class="dz" id="dz-abdominales"  style="left:82px;top:176px;width:76px;height:80px"   data-muscle="abdominales"> <div class="dz-icon">💪</div><div class="dz-hint">Abdominales</div><div class="dz-name">Abdominales</div></div>
+    <div class="dz" id="dz-deltoides-i"  style="left:50px;top:106px;width:28px;height:36px"   data-muscle="deltoides-i"> <div class="dz-icon">💪</div><div class="dz-hint" style="font-size:8px">Deltoides I</div><div class="dz-name">Deltoides Izq</div></div>
+    <div class="dz" id="dz-deltoides-d"  style="left:162px;top:106px;width:28px;height:36px"  data-muscle="deltoides-d"> <div class="dz-icon">💪</div><div class="dz-hint" style="font-size:8px">Deltoides D</div><div class="dz-name">Deltoides Der</div></div>
+    <div class="dz" id="dz-biceps-i"     style="left:38px;top:168px;width:28px;height:56px"   data-muscle="biceps-i">    <div class="dz-icon">💪</div><div class="dz-hint" style="font-size:8px">Bíceps I</div><div class="dz-name">Bíceps Izq</div></div>
+    <div class="dz" id="dz-biceps-d"     style="left:174px;top:168px;width:28px;height:56px"  data-muscle="biceps-d">    <div class="dz-icon">💪</div><div class="dz-hint" style="font-size:8px">Bíceps D</div><div class="dz-name">Bíceps Der</div></div>
+    <div class="dz" id="dz-cuadriceps-i" style="left:62px;top:356px;width:36px;height:88px"   data-muscle="cuadriceps-i"><div class="dz-icon">💪</div><div class="dz-hint" style="font-size:8px">Cuádriceps I</div><div class="dz-name">Cuádriceps Izq</div></div>
+    <div class="dz" id="dz-cuadriceps-d" style="left:142px;top:356px;width:36px;height:88px"  data-muscle="cuadriceps-d"><div class="dz-icon">💪</div><div class="dz-hint" style="font-size:8px">Cuádriceps D</div><div class="dz-name">Cuádriceps Der</div></div>
+    <div class="dz" id="dz-gemelo-i"     style="left:64px;top:444px;width:32px;height:54px"   data-muscle="gemelo-i">    <div class="dz-icon">💪</div><div class="dz-hint" style="font-size:8px">Gemelo I</div><div class="dz-name">Gemelo Izq</div></div>
+    <div class="dz" id="dz-gemelo-d"     style="left:144px;top:444px;width:32px;height:54px"  data-muscle="gemelo-d">    <div class="dz-icon">💪</div><div class="dz-hint" style="font-size:8px">Gemelo D</div><div class="dz-name">Gemelo Der</div></div>
+  </div>
+
+  <div id="info-box">
+    <div id="info-card">
+      <div id="info-placeholder">💪 Coloca un músculo para ver datos curiosos</div>
+      <div id="info-emoji" style="display:none"></div>
+      <div id="info-name"  style="display:none"></div>
+      <div id="info-fact"  style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div id="win">
+  <div class="big">🏆💪🏆</div>
+  <h2>¡Cuerpo Musculoso!</h2>
+  <p>¡Increíble, Daniel! Ya conoces todos los músculos del cuerpo. ¡Eres un científico genial! 🔬🌟</p>
+  <div class="win-btns">
+    <button class="wbtn wbtn-red"  onclick="resetGame()">🔄 Jugar de nuevo</button>
+    <button class="wbtn wbtn-back" onclick="window.location.href='body-menu.html'">← Volver</button>
+  </div>
+</div>
+
+<script>
+const MUSCLES = [
+  { id:'pectorales',   name:'Pectorales',       emoji:'💪', fact:'¡Los pectorales son los músculos del pecho y mueven tus brazos hacia adelante!' },
+  { id:'abdominales',  name:'Abdominales',       emoji:'💪', fact:'¡Tienes 6 músculos abdominales que protegen tus órganos como una armadura!' },
+  { id:'deltoides-i',  name:'Deltoides Izquierdo',emoji:'💪', fact:'El deltoides es el músculo del hombro — te permite levantar el brazo!' },
+  { id:'deltoides-d',  name:'Deltoides Derecho', emoji:'💪', fact:'Sin el deltoides no podrías lanzar una pelota ni escribir en el pizarrón!' },
+  { id:'biceps-i',     name:'Bíceps Izquierdo',  emoji:'💪', fact:'¡El bíceps dobla tu codo! Es el músculo que la gente muestra para presumir fuerza.' },
+  { id:'biceps-d',     name:'Bíceps Derecho',    emoji:'💪', fact:'¡Cuando doblas el brazo derecho, el bíceps se contrae y se hace más pequeño!' },
+  { id:'cuadriceps-i', name:'Cuádriceps Izquierdo',emoji:'💪',fact:'¡Son 4 músculos en uno! "Cuádri" significa cuatro. Te ayudan a correr y saltar.' },
+  { id:'cuadriceps-d', name:'Cuádriceps Derecho', emoji:'💪', fact:'¡El cuádriceps derecho es el músculo más grande de todo tu cuerpo!' },
+  { id:'gemelo-i',     name:'Gemelo Izquierdo',  emoji:'💪', fact:'El gemelo está en la pantorrilla y te impulsa al caminar, correr y brincar.' },
+  { id:'gemelo-d',     name:'Gemelo Derecho',    emoji:'💪', fact:'¡Los gemelos trabajan todo el día cada vez que das un paso! Son muy resistentes.' },
+];
+
+let placed=0, dragId=null, touchPiece=null, touchClone=null;
+
+function buildTray() {
+  const tray = document.getElementById('tray');
+  [...MUSCLES].sort(()=>Math.random()-.5).forEach(m => {
+    const c = document.createElement('div');
+    c.className='muscle-card'; c.id=`mc-${m.id}`; c.dataset.id=m.id; c.draggable=true;
+    c.innerHTML=`<span class="mc-icon">${m.emoji}</span><span class="mc-name">${m.name}</span>`;
+    c.addEventListener('dragstart', e=>{ dragId=m.id; c.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
+    c.addEventListener('dragend',   ()=>{ c.classList.remove('dragging'); dragId=null; clearOver(); });
+    tray.appendChild(c);
+  });
+}
+
+function setupZones() {
+  document.querySelectorAll('.dz').forEach(z => {
+    z.addEventListener('dragover',  e=>{ e.preventDefault(); if(!z.classList.contains('done')) z.classList.add('over'); });
+    z.addEventListener('dragleave', ()=>z.classList.remove('over'));
+    z.addEventListener('drop', e=>{ e.preventDefault(); z.classList.remove('over'); tryPlace(z); });
+  });
+}
+
+function clearOver() { document.querySelectorAll('.dz').forEach(z=>z.classList.remove('over')); }
+
+function tryPlace(zone) {
+  if(!dragId||zone.classList.contains('done')) return;
+  if(dragId===zone.dataset.muscle) {
+    doPlace(zone, MUSCLES.find(m=>m.id===dragId));
+  } else {
+    zone.classList.add('wrong');
+    setTimeout(()=>zone.classList.remove('wrong'),500);
+    showToast('❌ No va ahí — ¡sigue intentando!');
+  }
+}
+
+function doPlace(zone, muscle) {
+  zone.classList.add('done');
+  zone.querySelector('.dz-icon').textContent=muscle.emoji;
+  document.getElementById(`mc-${muscle.id}`).classList.add('placed');
+  placed++;
+  document.getElementById('prog-bar').style.width=(placed/10*100)+'%';
+  document.getElementById('prog-label').textContent=`${placed} de 10`;
+  showInfo(muscle);
+  showToast(`✅ ¡${muscle.name}! ${muscle.fact.split('!')[0]}!`);
+  if(placed===10) setTimeout(showWin,1000);
+}
+
+function showInfo(muscle) {
+  document.getElementById('info-placeholder').style.display='none';
+  document.getElementById('info-emoji').style.display='block'; document.getElementById('info-emoji').textContent=muscle.emoji;
+  document.getElementById('info-name').style.display='block';  document.getElementById('info-name').textContent=muscle.name;
+  document.getElementById('info-fact').style.display='block';  document.getElementById('info-fact').textContent=muscle.fact;
+}
+
+let toastT;
+function showToast(msg) {
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+function showWin() {
+  document.getElementById('win').classList.add('show');
+  const cols=['#f43f5e','#fda4af','#fb7185','#fff'];
+  for(let i=0;i<60;i++){
+    const el=document.createElement('div'); const c=cols[Math.floor(Math.random()*cols.length)];
+    Object.assign(el.style,{position:'fixed',left:Math.random()*100+'vw',top:'-20px',width:(6+Math.random()*8)+'px',height:(6+Math.random()*8)+'px',background:c,borderRadius:Math.random()>.5?'50%':'2px',zIndex:'400',pointerEvents:'none',animation:`fall ${1.5+Math.random()*2}s linear ${Math.random()*1.2}s forwards`});
+    document.body.appendChild(el); setTimeout(()=>el.remove(),4500);
+  }
+  if(!document.getElementById('cstyle')){const s=document.createElement('style');s.id='cstyle';s.textContent='@keyframes fall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}';document.head.appendChild(s);}
+}
+
+function resetGame() {
+  placed=0; dragId=null;
+  document.getElementById('win').classList.remove('show');
+  document.getElementById('prog-bar').style.width='0%';
+  document.getElementById('prog-label').textContent='0 de 10';
+  document.getElementById('info-placeholder').style.display='block';
+  ['info-emoji','info-name','info-fact'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('tray').innerHTML='<div id="tray-title" style="font-size:12px;font-weight:900;letter-spacing:2px;color:#9f1239;text-transform:uppercase;text-align:center;padding:4px 0;">💪 Músculos</div>';
+  document.querySelectorAll('.dz').forEach(z=>{ z.classList.remove('done','wrong'); z.querySelector('.dz-icon').textContent='💪'; });
+  buildTray(); setupZones();
+}
+
+// TOUCH
+document.addEventListener('touchstart', e=>{
+  const c=e.target.closest('.muscle-card'); if(!c||c.classList.contains('placed'))return;
+  e.preventDefault(); touchPiece=c.dataset.id;
+  const r=c.getBoundingClientRect(); touchClone=c.cloneNode(true);
+  Object.assign(touchClone.style,{position:'fixed',width:r.width+'px',opacity:'.85',zIndex:'999',pointerEvents:'none',borderRadius:'14px',top:r.top+'px',left:r.left+'px'});
+  document.body.appendChild(touchClone); c.classList.add('dragging');
+},{passive:false});
+
+document.addEventListener('touchmove', e=>{
+  if(!touchClone)return; e.preventDefault();
+  const t=e.touches[0];
+  touchClone.style.left=(t.clientX-parseInt(touchClone.style.width)/2)+'px';
+  touchClone.style.top=(t.clientY-30)+'px';
+  clearOver();
+  const el=document.elementFromPoint(t.clientX,t.clientY);
+  const z=el?.closest('.dz');
+  if(z&&!z.classList.contains('done')) z.classList.add('over');
+},{passive:false});
+
+document.addEventListener('touchend', e=>{
+  if(!touchClone||!touchPiece)return;
+  const t=e.changedTouches[0]; touchClone.remove(); touchClone=null;
+  document.getElementById(`mc-${touchPiece}`)?.classList.remove('dragging');
+  clearOver();
+  const el=document.elementFromPoint(t.clientX,t.clientY);
+  const z=el?.closest('.dz');
+  if(z&&!z.classList.contains('done')){ dragId=touchPiece; tryPlace(z); }
+  touchPiece=null; dragId=null;
+});
+
+buildTray(); setupZones();
+</script>
+</body>
+</html>

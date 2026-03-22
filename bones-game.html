@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Los Huesos 🦴</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+  :root { --bg:#1a1000; --gold:#fbbf24; --amber:#f59e0b; --cream:#fef3c7; --dark:#451a03; }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); font-family:'Nunito',sans-serif; min-height:100vh; overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; background:radial-gradient(ellipse 70% 60% at 50% 0%, rgba(251,191,36,.12) 0,transparent 70%); pointer-events:none; }
+
+  .back { position:fixed; top:16px; left:16px; z-index:100; background:rgba(251,191,36,.15); border:2px solid rgba(251,191,36,.3); color:#fde68a; padding:8px 14px; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer; text-decoration:none; transition:all .2s; }
+  .back:hover { background:rgba(251,191,36,.3); }
+
+  /* HEADER */
+  #header { text-align:center; padding:20px 20px 10px; position:relative; }
+  #header h1 { font-size:clamp(22px,4vw,36px); font-weight:900; color:var(--gold); text-shadow:0 0 30px rgba(251,191,36,.5); margin-bottom:4px; }
+  #header p  { font-size:13px; color:#92400e; font-weight:700; }
+
+  /* PROGRESS */
+  #prog-wrap { display:flex; align-items:center; gap:12px; padding:8px 24px; max-width:600px; margin:0 auto; }
+  #prog-track { flex:1; height:14px; background:#451a03; border-radius:7px; overflow:hidden; border:2px solid #78350f; }
+  #prog-bar   { height:100%; background:linear-gradient(90deg,var(--amber),var(--gold)); border-radius:5px; width:0%; transition:width .5s ease; }
+  #prog-label { font-size:13px; font-weight:900; color:var(--gold); white-space:nowrap; min-width:70px; text-align:right; }
+
+  /* MAIN LAYOUT */
+  #layout { display:flex; align-items:flex-start; justify-content:center; gap:20px; padding:10px 16px 20px; max-width:960px; margin:0 auto; flex-wrap:wrap; }
+
+  /* PIECE TRAY */
+  #tray { display:flex; flex-direction:column; gap:8px; width:170px; flex-shrink:0; }
+  #tray-title { font-size:12px; font-weight:900; letter-spacing:2px; color:#78350f; text-transform:uppercase; text-align:center; padding:4px 0; }
+
+  .bone-card {
+    background:#2a1500; border:2px solid #78350f;
+    border-radius:14px; padding:10px 12px;
+    cursor:grab; user-select:none;
+    display:flex; align-items:center; gap:10px;
+    transition:transform .15s, box-shadow .15s, opacity .3s;
+  }
+  .bone-card:hover { transform:translateY(-2px) scale(1.03); box-shadow:0 8px 24px rgba(0,0,0,.5); border-color:var(--gold); }
+  .bone-card:active { cursor:grabbing; transform:scale(.96); }
+  .bone-card.placed { opacity:.3; pointer-events:none; }
+  .bone-card.dragging { opacity:.35; }
+  .bc-icon { font-size:22px; flex-shrink:0; }
+  .bc-name { font-size:12px; font-weight:900; color:var(--cream); line-height:1.2; }
+
+  /* BODY AREA */
+  #body-area { position:relative; flex-shrink:0; }
+  #body-svg  { display:block; width:260px; height:auto; }
+
+  /* DROP ZONES */
+  .dz {
+    position:absolute; border:3px dashed rgba(251,191,36,.35);
+    border-radius:10px; background:rgba(251,191,36,.04);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    cursor:crosshair; transition:all .2s; z-index:10;
+  }
+  .dz:hover:not(.done) { border-color:rgba(251,191,36,.7); background:rgba(251,191,36,.1); }
+  .dz.over  { border-color:var(--gold); background:rgba(251,191,36,.18); border-style:solid; transform:scale(1.05); }
+  .dz.done  { border-style:solid; border-color:rgba(251,191,36,.5); background:rgba(251,191,36,.08); cursor:default; }
+  .dz.wrong { animation:dzShake .4s ease; border-color:#ef4444; background:rgba(239,68,68,.1); }
+  @keyframes dzShake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-5px)} 40%,80%{transform:translateX(5px)} }
+
+  .dz-hint { font-size:10px; font-weight:800; color:rgba(251,191,36,.4); text-align:center; line-height:1.2; padding:2px; }
+  .dz-icon { font-size:22px; display:none; }
+  .dz.done .dz-hint { display:none; }
+  .dz.done .dz-icon { display:block; }
+
+  .dz-name {
+    position:absolute; bottom:-20px; left:50%; transform:translateX(-50%);
+    font-size:9px; font-weight:900; color:var(--gold); white-space:nowrap;
+    opacity:0; transition:opacity .2s; pointer-events:none;
+  }
+  .dz:hover .dz-name, .dz.done .dz-name { opacity:1; }
+
+  /* INFO BOX */
+  #info-box { width:170px; flex-shrink:0; }
+  #info-card {
+    background:#2a1500; border:2px solid #78350f; border-radius:14px;
+    padding:14px; min-height:120px;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  #info-emoji { font-size:32px; }
+  #info-name  { font-size:14px; font-weight:900; color:var(--gold); }
+  #info-fact  { font-size:12px; font-weight:700; color:#d97706; line-height:1.5; }
+  #info-placeholder { font-size:12px; color:#78350f; font-weight:700; text-align:center; padding:20px 0; }
+
+  /* TOAST */
+  #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#1c1400; border:2px solid var(--gold); border-radius:12px; padding:10px 20px; font-size:13px; font-weight:800; color:var(--gold); z-index:200; opacity:0; transition:opacity .3s; pointer-events:none; text-align:center; max-width:90vw; }
+  #toast.show { opacity:1; }
+
+  /* WIN */
+  #win { display:none; position:fixed; inset:0; background:rgba(0,0,0,.9); z-index:300; flex-direction:column; align-items:center; justify-content:center; gap:16px; text-align:center; padding:20px; }
+  #win.show { display:flex; }
+  #win .big { font-size:64px; }
+  #win h2 { font-size:32px; font-weight:900; color:var(--gold); text-shadow:0 0 30px rgba(251,191,36,.6); }
+  #win p  { font-size:15px; color:#d97706; font-weight:700; max-width:320px; line-height:1.6; }
+  .win-btns { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:8px; }
+  .wbtn { padding:12px 24px; border:none; border-radius:12px; font-family:'Nunito',sans-serif; font-weight:900; font-size:15px; cursor:pointer; transition:transform .1s; }
+  .wbtn:hover { transform:scale(1.05); }
+  .wbtn-gold { background:var(--gold); color:#000; }
+  .wbtn-back { background:rgba(255,255,255,.1); color:#fff; border:2px solid rgba(255,255,255,.2); }
+
+  /* Confetti */
+  @keyframes fall { 0%{transform:translateY(-20px) rotate(0);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }
+</style>
+</head>
+<body>
+<a href="body-menu.html" class="back">← Volver</a>
+
+<div id="header">
+  <h1>🦴 Los Huesos del Cuerpo</h1>
+  <p>Arrastra cada hueso a su lugar en el cuerpo</p>
+</div>
+
+<div id="prog-wrap">
+  <div id="prog-track"><div id="prog-bar"></div></div>
+  <div id="prog-label">0 de 10</div>
+</div>
+
+<div id="layout">
+  <!-- TRAY -->
+  <div id="tray">
+    <div id="tray-title">🦴 Huesos</div>
+    <!-- cards injected by JS -->
+  </div>
+
+  <!-- BODY -->
+  <div id="body-area">
+    <svg id="body-svg" viewBox="0 0 240 520" xmlns="http://www.w3.org/2000/svg" width="240" height="520">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#2a1500" stop-opacity=".9"/>
+          <stop offset="100%" stop-color="#1a0e00" stop-opacity=".9"/>
+        </linearGradient>
+      </defs>
+      <!-- Head -->
+      <ellipse cx="120" cy="46" rx="34" ry="40" fill="url(#bg)" stroke="#78350f" stroke-width="2"/>
+      <!-- Neck -->
+      <rect x="108" y="82" width="24" height="20" rx="6" fill="url(#bg)" stroke="#78350f" stroke-width="2"/>
+      <!-- Torso -->
+      <path d="M72,102 Q58,118 56,188 L56,284 Q58,302 120,306 Q182,302 184,284 L184,188 Q182,118 168,102 Z" fill="url(#bg)" stroke="#78350f" stroke-width="2"/>
+      <!-- Arm L -->
+      <path d="M72,108 Q50,128 44,166 L38,238 Q36,254 48,256 L56,256 Q66,254 68,238 L72,166 Z" fill="url(#bg)" stroke="#78350f" stroke-width="2"/>
+      <!-- Arm R -->
+      <path d="M168,108 Q190,128 196,166 L202,238 Q204,254 192,256 L184,256 Q174,254 172,238 L168,166 Z" fill="url(#bg)" stroke="#78350f" stroke-width="2"/>
+      <!-- Hand L -->
+      <ellipse cx="47" cy="268" rx="12" ry="16" fill="url(#bg)" stroke="#78350f" stroke-width="2"/>
+      <!-- Hand R -->
+      <ellipse cx="193" cy="268" rx="12" ry="16" fill="url(#bg)" stroke="#78350f" stroke-width="2"/>
+      <!-- Pelvis -->
+      <path d="M76,300 Q60,316 62,340 L80,358 Q120,368 160,358 L178,340 Q180,316 164,300 Z" fill="url(#bg)" stroke="#78350f" stroke-width="2"/>
+      <!-- Leg L -->
+      <path d="M80,354 Q68,388 66,432 L64,480 Q63,494 78,496 L88,496 Q99,494 100,480 L102,432 Q104,388 96,354 Z" fill="url(#bg)" stroke="#78350f" stroke-width="2"/>
+      <!-- Leg R -->
+      <path d="M160,354 Q172,388 174,432 L176,480 Q177,494 162,496 L152,496 Q141,494 140,480 L138,432 Q136,388 144,354 Z" fill="url(#bg)" stroke="#78350f" stroke-width="2"/>
+      <!-- Foot L -->
+      <ellipse cx="82" cy="505" rx="22" ry="10" fill="url(#bg)" stroke="#78350f" stroke-width="2"/>
+      <!-- Foot R -->
+      <ellipse cx="158" cy="505" rx="22" ry="10" fill="url(#bg)" stroke="#78350f" stroke-width="2"/>
+      <!-- Spine dashes -->
+      <line x1="120" y1="102" x2="120" y2="300" stroke="#451a03" stroke-width="2" stroke-dasharray="5,5"/>
+    </svg>
+
+    <!-- DROP ZONES -->
+    <div class="dz" id="dz-craneo"    style="left:88px;top:6px;width:64px;height:78px"    data-bone="craneo">    <div class="dz-icon">🦴</div><div class="dz-hint">Cráneo</div><div class="dz-name">Cráneo</div></div>
+    <div class="dz" id="dz-columna"   style="left:109px;top:102px;width:22px;height:130px" data-bone="columna">  <div class="dz-icon">🦴</div><div class="dz-hint" style="writing-mode:vertical-rl;font-size:9px">Columna</div><div class="dz-name">Columna</div></div>
+    <div class="dz" id="dz-costillas" style="left:72px;top:118px;width:96px;height:80px"   data-bone="costillas"><div class="dz-icon">🦴</div><div class="dz-hint">Costillas</div><div class="dz-name">Costillas</div></div>
+    <div class="dz" id="dz-humero-i"  style="left:40px;top:112px;width:30px;height:90px"   data-bone="humero-i"> <div class="dz-icon">🦴</div><div class="dz-hint" style="font-size:8px">Húmero I</div><div class="dz-name">Húmero Izq</div></div>
+    <div class="dz" id="dz-humero-d"  style="left:170px;top:112px;width:30px;height:90px"  data-bone="humero-d"> <div class="dz-icon">🦴</div><div class="dz-hint" style="font-size:8px">Húmero D</div><div class="dz-name">Húmero Der</div></div>
+    <div class="dz" id="dz-pelvis"    style="left:72px;top:296px;width:96px;height:54px"   data-bone="pelvis">   <div class="dz-icon">🦴</div><div class="dz-hint">Pelvis</div><div class="dz-name">Pelvis</div></div>
+    <div class="dz" id="dz-femur-i"   style="left:62px;top:350px;width:38px;height:110px"  data-bone="femur-i">  <div class="dz-icon">🦴</div><div class="dz-hint" style="font-size:8px">Fémur I</div><div class="dz-name">Fémur Izq</div></div>
+    <div class="dz" id="dz-femur-d"   style="left:140px;top:350px;width:38px;height:110px" data-bone="femur-d">  <div class="dz-icon">🦴</div><div class="dz-hint" style="font-size:8px">Fémur D</div><div class="dz-name">Fémur Der</div></div>
+    <div class="dz" id="dz-tibia-i"   style="left:64px;top:460px;width:34px;height:46px"   data-bone="tibia-i">  <div class="dz-icon">🦴</div><div class="dz-hint" style="font-size:8px">Tibia I</div><div class="dz-name">Tibia Izq</div></div>
+    <div class="dz" id="dz-tibia-d"   style="left:142px;top:460px;width:34px;height:46px"  data-bone="tibia-d">  <div class="dz-icon">🦴</div><div class="dz-hint" style="font-size:8px">Tibia D</div><div class="dz-name">Tibia Der</div></div>
+  </div>
+
+  <!-- INFO -->
+  <div id="info-box">
+    <div id="info-card">
+      <div id="info-placeholder">🦴 Coloca un hueso para ver datos curiosos</div>
+      <div id="info-emoji" style="display:none"></div>
+      <div id="info-name"  style="display:none"></div>
+      <div id="info-fact"  style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- WIN -->
+<div id="win">
+  <div class="big">🏆🦴🏆</div>
+  <h2>¡Esqueleto Completo!</h2>
+  <p>¡Felicidades Daniel! Ya conoces todos los huesos del cuerpo humano. ¡Eres increíble! 🌟</p>
+  <div class="win-btns">
+    <button class="wbtn wbtn-gold" onclick="resetGame()">🔄 Jugar de nuevo</button>
+    <button class="wbtn wbtn-back" onclick="window.location.href='body-menu.html'">← Volver</button>
+  </div>
+</div>
+
+<script>
+const BONES = [
+  { id:'craneo',    name:'Cráneo',           emoji:'💀', fact:'¡El cráneo tiene 22 huesos y protege tu cerebro como un casco!' },
+  { id:'columna',   name:'Columna Vertebral',emoji:'🦴', fact:'¡Tiene 33 huesos pequeños llamados vértebras apilados uno sobre otro!' },
+  { id:'costillas', name:'Costillas',         emoji:'🦴', fact:'Tienes 12 pares de costillas — ¡forman una jaula que protege tu corazón!' },
+  { id:'humero-i',  name:'Húmero Izquierdo', emoji:'🦴', fact:'Es el hueso largo de tu brazo izquierdo. ¡Te ayuda a levantar cosas!' },
+  { id:'humero-d',  name:'Húmero Derecho',   emoji:'🦴', fact:'Es el hueso largo de tu brazo derecho. ¡Te ayuda a escribir!' },
+  { id:'pelvis',    name:'Pelvis',            emoji:'🦴', fact:'¡La pelvis es como un cuenco de hueso que sostiene tus órganos!' },
+  { id:'femur-i',   name:'Fémur Izquierdo',  emoji:'🦴', fact:'¡El fémur es el hueso más LARGO y FUERTE de todo tu cuerpo!' },
+  { id:'femur-d',   name:'Fémur Derecho',    emoji:'🦴', fact:'¡Puede soportar el peso de un carro pequeño sin romperse!' },
+  { id:'tibia-i',   name:'Tibia Izquierda',  emoji:'🦴', fact:'Es el hueso de la espinilla. ¡Puedes sentirlo si te tocas la pierna!' },
+  { id:'tibia-d',   name:'Tibia Derecha',    emoji:'🦴', fact:'¡La tibia y el peroné trabajan juntos para mover tu pie!' },
+];
+
+let placed = 0, dragId = null, touchPiece = null, touchClone = null;
+
+function buildTray() {
+  const tray = document.getElementById('tray');
+  [...BONES].sort(()=>Math.random()-.5).forEach(b => {
+    const c = document.createElement('div');
+    c.className = 'bone-card'; c.id = `bc-${b.id}`; c.dataset.id = b.id; c.draggable = true;
+    c.innerHTML = `<span class="bc-icon">${b.emoji}</span><span class="bc-name">${b.name}</span>`;
+    c.addEventListener('dragstart', e => { dragId=b.id; c.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
+    c.addEventListener('dragend',   () => { c.classList.remove('dragging'); dragId=null; clearOver(); });
+    tray.appendChild(c);
+  });
+}
+
+function setupZones() {
+  document.querySelectorAll('.dz').forEach(z => {
+    z.addEventListener('dragover',  e => { e.preventDefault(); if(!z.classList.contains('done')) z.classList.add('over'); });
+    z.addEventListener('dragleave', () => z.classList.remove('over'));
+    z.addEventListener('drop', e => { e.preventDefault(); z.classList.remove('over'); tryPlace(z); });
+  });
+}
+
+function clearOver() { document.querySelectorAll('.dz').forEach(z=>z.classList.remove('over')); }
+
+function tryPlace(zone) {
+  if (!dragId || zone.classList.contains('done')) return;
+  if (dragId === zone.dataset.bone) {
+    doPlace(zone, BONES.find(b=>b.id===dragId));
+  } else {
+    zone.classList.add('wrong');
+    setTimeout(()=>zone.classList.remove('wrong'), 500);
+    showToast('❌ No va ahí — ¡sigue intentando!');
+  }
+}
+
+function doPlace(zone, bone) {
+  zone.classList.add('done');
+  zone.querySelector('.dz-icon').textContent = bone.emoji;
+  document.getElementById(`bc-${bone.id}`).classList.add('placed');
+  placed++;
+  document.getElementById('prog-bar').style.width = (placed/10*100)+'%';
+  document.getElementById('prog-label').textContent = `${placed} de 10`;
+  showInfo(bone);
+  showToast(`✅ ¡${bone.name}! ${bone.fact.split('!')[0]}!`);
+  if (placed === 10) setTimeout(showWin, 1000);
+}
+
+function showInfo(bone) {
+  document.getElementById('info-placeholder').style.display = 'none';
+  document.getElementById('info-emoji').style.display = 'block'; document.getElementById('info-emoji').textContent = bone.emoji;
+  document.getElementById('info-name').style.display  = 'block'; document.getElementById('info-name').textContent  = bone.name;
+  document.getElementById('info-fact').style.display  = 'block'; document.getElementById('info-fact').textContent  = bone.fact;
+}
+
+let toastT;
+function showToast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+function showWin() {
+  document.getElementById('win').classList.add('show');
+  const cols=['#fbbf24','#f59e0b','#fde68a','#fff'];
+  for(let i=0;i<60;i++){
+    const el=document.createElement('div');
+    const c=cols[Math.floor(Math.random()*cols.length)];
+    Object.assign(el.style,{position:'fixed',left:Math.random()*100+'vw',top:'-20px',width:(6+Math.random()*8)+'px',height:(6+Math.random()*8)+'px',background:c,borderRadius:Math.random()>.5?'50%':'2px',zIndex:'400',pointerEvents:'none',animation:`fall ${1.5+Math.random()*2}s linear ${Math.random()*1.2}s forwards`});
+    document.body.appendChild(el); setTimeout(()=>el.remove(),4500);
+  }
+  if(!document.getElementById('cstyle')){const s=document.createElement('style');s.id='cstyle';s.textContent='@keyframes fall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}';document.head.appendChild(s);}
+}
+
+function resetGame() {
+  placed=0; dragId=null;
+  document.getElementById('win').classList.remove('show');
+  document.getElementById('prog-bar').style.width='0%';
+  document.getElementById('prog-label').textContent='0 de 10';
+  document.getElementById('info-placeholder').style.display='block';
+  ['info-emoji','info-name','info-fact'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('tray').innerHTML='<div id="tray-title" style="font-size:12px;font-weight:900;letter-spacing:2px;color:#78350f;text-transform:uppercase;text-align:center;padding:4px 0;">🦴 Huesos</div>';
+  document.querySelectorAll('.dz').forEach(z=>{ z.classList.remove('done','wrong'); z.querySelector('.dz-icon').textContent='🦴'; });
+  buildTray(); setupZones();
+}
+
+// TOUCH
+document.addEventListener('touchstart', e => {
+  const c = e.target.closest('.bone-card'); if(!c||c.classList.contains('placed')) return;
+  e.preventDefault(); touchPiece=c.dataset.id;
+  const r=c.getBoundingClientRect(); touchClone=c.cloneNode(true);
+  Object.assign(touchClone.style,{position:'fixed',width:r.width+'px',opacity:'.85',zIndex:'999',pointerEvents:'none',borderRadius:'14px',top:r.top+'px',left:r.left+'px'});
+  document.body.appendChild(touchClone); c.classList.add('dragging');
+},{passive:false});
+
+document.addEventListener('touchmove', e=>{
+  if(!touchClone)return; e.preventDefault();
+  const t=e.touches[0];
+  touchClone.style.left=(t.clientX-parseInt(touchClone.style.width)/2)+'px';
+  touchClone.style.top=(t.clientY-30)+'px';
+  clearOver();
+  const el=document.elementFromPoint(t.clientX,t.clientY);
+  const z=el?.closest('.dz');
+  if(z&&!z.classList.contains('done')) z.classList.add('over');
+},{passive:false});
+
+document.addEventListener('touchend', e=>{
+  if(!touchClone||!touchPiece)return;
+  const t=e.changedTouches[0]; touchClone.remove(); touchClone=null;
+  document.getElementById(`bc-${touchPiece}`)?.classList.remove('dragging');
+  clearOver();
+  const el=document.elementFromPoint(t.clientX,t.clientY);
+  const z=el?.closest('.dz');
+  if(z&&!z.classList.contains('done')){ dragId=touchPiece; tryPlace(z); }
+  touchPiece=null; dragId=null;
+});
+
+buildTray(); setupZones();
+</script>
+</body>
+</html>
