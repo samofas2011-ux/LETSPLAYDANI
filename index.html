@@ -3,949 +3,389 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MathBros - Tablas de Multiplicar</title>
+<title>Estudios Daniel Salazar 🎓</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Press+Start+2P&display=swap');
 
   :root {
-    --sky:#5c94fc; --ground:#c84c0c; --ground-top:#6aaa40;
-    --mario-red:#e52222; --mario-blue:#2038ec;
-    --coin:#f8d038; --pipe:#00a800;
-    --correct:#00c800; --wrong:#e52222;
+    --bg: #0a0e1a;
+    --card-bg: #111827;
+    --border: #1f2937;
+    --text: #f9fafb;
+    --sub: #6b7280;
+    --gold: #fbbf24;
+    --cyan: #22d3ee;
+    --pink: #f472b6;
+    --green: #4ade80;
+    --purple: #a78bfa;
+    --orange: #fb923c;
   }
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--sky);font-family:'Press Start 2P',monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;overflow:hidden;}
-  #game-wrapper{width:100%;max-width:900px;display:flex;flex-direction:column;}
 
-  /* BANNER */
-  #player-banner{background:#000;border-bottom:3px solid #e52222;text-align:center;padding:7px 10px;}
-  #player-banner-inner{display:flex;justify-content:center;align-items:center;gap:12px;}
-  .banner-item{color:var(--coin);font-size:10px;letter-spacing:3px;text-shadow:2px 2px 0 #c84c0c;}
-  .banner-item span{color:#fff;}
+  * { margin:0; padding:0; box-sizing:border-box; }
 
-  /* HUD */
-  #hud{background:#000;color:var(--coin);padding:10px 20px;display:flex;justify-content:space-between;align-items:center;font-size:10px;border-bottom:4px solid var(--coin);letter-spacing:1px;}
-  #hud .score-block{display:flex;flex-direction:column;gap:4px;text-align:center;}
-  #hud .score-block span:first-child{color:#aaa;font-size:8px;}
-  #hud .score-block span:last-child{color:#fff;font-size:12px;}
-
-  /* SESSION */
-  #session-bar{background:#111;border-bottom:3px solid #333;padding:6px 16px;display:flex;justify-content:center;align-items:center;gap:14px;font-size:9px;color:#aaa;letter-spacing:1px;}
-  .session-item{color:#fff;} .session-item span{color:var(--coin);font-size:11px;} .session-sep{color:#444;}
-
-  /* CANVAS */
-  #game-canvas{position:relative;height:340px;background:linear-gradient(180deg,#5c94fc 0%,#7ab0ff 80%,#5c94fc 100%);overflow:hidden;border-left:4px solid #000;border-right:4px solid #000;transition:background 0.8s ease;}
-  #game-canvas.boss1-mode{background:linear-gradient(180deg,#ff6600 0%,#ff4400 60%,#cc2200 100%);}
-  #game-canvas.boss2-mode{background:linear-gradient(180deg,#003366 0%,#0055aa 60%,#002244 100%);}
-  #game-canvas.boss3-mode{background:linear-gradient(180deg,#110022 0%,#330055 60%,#110022 100%);}
-
-  /* CLOUDS */
-  .cloud{position:absolute;background:white;border-radius:20px;animation:cloudMove linear infinite;opacity:0.9;}
-  .cloud::before,.cloud::after{content:'';position:absolute;background:white;border-radius:50%;}
-  .cloud::before{width:60%;height:150%;top:-60%;left:10%;}
-  .cloud::after{width:40%;height:130%;top:-40%;right:10%;}
-  .cloud1{width:80px;height:28px;top:30px;animation-duration:20s;}
-  .cloud2{width:60px;height:22px;top:70px;animation-duration:28s;animation-delay:-10s;}
-  .cloud3{width:100px;height:34px;top:20px;animation-duration:25s;animation-delay:-6s;}
-  @keyframes cloudMove{from{left:110%}to{left:-150px}}
-  #game-canvas.boss1-mode .cloud,#game-canvas.boss2-mode .cloud,#game-canvas.boss3-mode .cloud{opacity:0;transition:opacity 0.8s;}
-
-  /* GROUND */
-  #ground{position:absolute;bottom:0;width:100%;height:60px;background:var(--ground);border-top:8px solid var(--ground-top);}
-  #ground::after{content:'';position:absolute;top:8px;left:0;right:0;height:10px;background:repeating-linear-gradient(90deg,rgba(0,0,0,0.15) 0,rgba(0,0,0,0.15) 2px,transparent 2px,transparent 40px);}
-
-  /* PROGRESS */
-  #progress-bar-track{position:absolute;bottom:68px;left:10px;right:10px;height:8px;background:rgba(0,0,0,0.3);border-radius:4px;overflow:hidden;}
-  #progress-fill{height:100%;background:linear-gradient(90deg,var(--coin),#ff8800);border-radius:4px;transition:width 0.5s ease;width:0%;}
-
-  /* FLAG */
-  #flag{position:absolute;right:30px;bottom:60px;display:flex;flex-direction:column;align-items:center;}
-  #flag-pole{width:4px;height:120px;background:#888;margin:0 auto;}
-  #flag-banner{width:24px;height:18px;background:var(--pipe);position:absolute;top:0;left:4px;clip-path:polygon(0 0,100% 50%,0 100%);}
-  #flag-star{font-size:16px;position:absolute;top:-20px;left:50%;transform:translateX(-50%);}
-
-  /* MARIO */
-  #mario{position:absolute;bottom:60px;left:30px;width:40px;height:48px;transition:left 0.5s ease;z-index:10;}
-  #mario.jumping{animation:jump 0.5s ease;}
-  #mario.hurt{animation:hurt 0.4s ease;}
-  @keyframes jump{0%{transform:translateY(0)}40%{transform:translateY(-80px)}100%{transform:translateY(0)}}
-  @keyframes hurt{0%,100%{transform:translateX(0);filter:brightness(1)}25%{transform:translateX(-15px);filter:brightness(3) hue-rotate(30deg)}75%{transform:translateX(-10px);filter:brightness(2)}}
-  .mario-svg{width:40px;height:48px;}
-
-  /* PIPES */
-  .pipe{position:absolute;bottom:60px;width:40px;background:var(--pipe);border:3px solid #006400;border-radius:4px 4px 0 0;}
-  .pipe::before{content:'';position:absolute;top:-8px;left:-5px;right:-5px;height:14px;background:#00a800;border:3px solid #006400;border-radius:4px;}
-  .pipe1{height:50px;left:20%;}
-  .pipe2{height:65px;left:50%;}
-  .pipe3{height:45px;left:75%;}
-
-  /* ======= BOSS CONTAINERS (shared style) ======= */
-  .boss-container{
-    position:absolute; z-index:15;
-    display:none; /* hidden until triggered */
-    flex-direction:column; align-items:center;
+  body {
+    background: var(--bg);
+    font-family: 'Nunito', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
   }
-  .boss-container.visible {
-    display:flex;
-    animation: bossPopIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(34,211,238,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34,211,238,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
   }
-  @keyframes bossPopIn {
-    0%   { transform: translateY(60px) scale(0.3); opacity:0; }
-    60%  { transform: translateY(-10px) scale(1.1); opacity:1; }
-    100% { transform: translateY(0) scale(1); opacity:1; }
+
+  /* Floating orbs */
+  .orb {
+    position: fixed; border-radius: 50%; filter: blur(80px);
+    pointer-events: none; z-index: 0; opacity: 0.15;
   }
-  #bjr-container { bottom:108px; left:calc(20% - 20px); width:68px; }
-  #bumbum-container { bottom:123px; left:calc(50% - 22px); width:72px; }
-  #bowser-container { bottom:103px; left:calc(75% - 18px); width:76px; }
+  .orb1 { width:400px;height:400px; background:#22d3ee; top:-100px; left:-100px; animation: orbFloat1 8s ease-in-out infinite; }
+  .orb2 { width:300px;height:300px; background:#f472b6; bottom:-80px; right:-80px; animation: orbFloat2 10s ease-in-out infinite; }
+  .orb3 { width:250px;height:250px; background:#a78bfa; top:50%; left:50%; transform:translate(-50%,-50%); animation: orbFloat3 12s ease-in-out infinite; }
+  @keyframes orbFloat1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(40px,30px)} }
+  @keyframes orbFloat2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-30px,-40px)} }
+  @keyframes orbFloat3 { 0%,100%{transform:translate(-50%,-50%) scale(1)} 50%{transform:translate(-50%,-50%) scale(1.15)} }
 
-  .boss-label{display:none;font-size:5px;letter-spacing:1px;margin-bottom:3px;text-shadow:1px 1px 0 #000;text-align:center;}
-  #bjr-label    { color:#ff8800; }
-  #bumbum-label { color:#4488ff; }
-  #bowser-label { color:#ff4400; }
+  #app { position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; }
 
-  .boss-hp-bar{display:none;height:8px;background:#333;border:2px solid #fff;border-radius:3px;overflow:hidden;margin-bottom:4px;}
-  #bjr-hp-bar    { width:68px; }
-  #bumbum-hp-bar { width:72px; }
-  #bowser-hp-bar { width:76px; }
-
-  .boss-hp-fill{height:100%;width:100%;transition:width 0.4s ease;}
-  #bjr-hp-fill    { background:linear-gradient(90deg,#ff8800,#ffcc00); }
-  #bumbum-hp-fill { background:linear-gradient(90deg,#2244ff,#44aaff); }
-  #bowser-hp-fill { background:linear-gradient(90deg,#ff2200,#ff6600); }
-
-  /* boss SVG wrap animations */
-  .boss-wrap.idle     { animation:bossBob 1s ease-in-out infinite; }
-  .boss-wrap.hit      { animation:bossHit 0.35s ease; }
-  .boss-wrap.attacking{ animation:bossAtk 0.5s ease; }
-  .boss-wrap.defeated { animation:bossFall 0.7s ease forwards; }
-  @keyframes bossBob  {0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-  @keyframes bossHit  {0%,100%{filter:brightness(1);transform:scale(1)}40%{filter:brightness(4) saturate(0);transform:scale(1.15)}}
-  @keyframes bossAtk  {0%,100%{filter:brightness(1)}30%,70%{filter:brightness(2.5) hue-rotate(200deg)}}
-  @keyframes bossFall {0%{transform:rotate(0) translateY(0);opacity:1}60%{transform:rotate(-30deg) translateY(10px);opacity:.7}100%{transform:rotate(-90deg) translateY(60px);opacity:0}}
-
-  /* PROJECTILES */
-  .fireball,.bomba,.shell{position:absolute;font-size:22px;pointer-events:none;z-index:20;}
-  .fireball{animation:fbFly 0.7s ease forwards;}
-  .bomba   {animation:fbFly 0.6s ease forwards;}
-  .shell   {animation:fbFly 0.8s ease forwards;}
-  @keyframes fbFly{0%{opacity:1;transform:translateX(0) scale(1)}100%{opacity:0;transform:translateX(-140px) scale(0.3)}}
-
-  /* COIN / HEART */
-  .coin-anim{position:absolute;font-size:20px;animation:coinUp 0.8s ease forwards;pointer-events:none;z-index:20;}
-  @keyframes coinUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(1.5)}}
-  .heart-pop{position:absolute;font-size:14px;color:#ff6688;font-family:'Press Start 2P',monospace;white-space:nowrap;pointer-events:none;z-index:30;animation:heartPop 1.2s ease forwards;text-shadow:1px 1px 0 #000;}
-  @keyframes heartPop{0%{opacity:0;transform:translateY(0) scale(0.5)}20%{opacity:1;transform:translateY(-10px) scale(1.3)}70%{opacity:1;transform:translateY(-50px) scale(1)}100%{opacity:0;transform:translateY(-80px) scale(0.8)}}
-
-  /* QUESTION AREA */
-  #question-area{background:#000;border-top:4px solid var(--coin);padding:16px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;}
-  #question-area.boss1-fight{border-top-color:#ff8800;background:#1a0800;}
-  #question-area.boss2-fight{border-top-color:#4488ff;background:#000a1a;}
-  #question-area.boss3-fight{border-top-color:#ff4400;background:#0d0000;}
-  #question-title{color:var(--coin);font-size:10px;letter-spacing:2px;text-align:center;}
-  #question-area.boss1-fight #question-title{color:#ff8800;}
-  #question-area.boss2-fight #question-title{color:#44aaff;}
-  #question-area.boss3-fight #question-title{color:#ff4400;}
-  #question-text{color:#fff;font-size:20px;text-align:center;letter-spacing:2px;text-shadow:3px 3px 0 #333;}
-
-  #boss-status{display:none;border:2px solid #888;padding:6px 14px;font-size:8px;color:#ddd;letter-spacing:1px;text-align:center;border-radius:4px;line-height:1.8;}
-  #question-area.boss1-fight #boss-status{background:#1a0800;border-color:#ff8800;color:#ffbb44;}
-  #question-area.boss2-fight #boss-status{background:#000a1a;border-color:#4488ff;color:#88ccff;}
-  #question-area.boss3-fight #boss-status{background:#1a0000;border-color:#ff4400;color:#ff8800;}
-
-  #answers-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;max-width:600px;}
-  .answer-btn{background:var(--mario-blue);color:#fff;border:3px solid #fff;padding:10px 4px;font-family:'Press Start 2P',monospace;font-size:12px;cursor:pointer;text-align:center;transition:transform .1s,background .1s;outline:none;box-shadow:0 4px 0 #001080;}
-  .answer-btn:hover{background:#3050ff;transform:translateY(-2px);box-shadow:0 6px 0 #001080;}
-  .answer-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #001080;}
-  .answer-btn.correct{background:var(--correct)!important;border-color:#0f0;box-shadow:0 0 12px #0f0;animation:cpulse .4s ease;}
-  .answer-btn.wrong{background:var(--wrong)!important;border-color:#f00;animation:cshake .4s ease;}
-  #question-area.boss1-fight .answer-btn{background:#7a3300;box-shadow:0 4px 0 #331500;}
-  #question-area.boss2-fight .answer-btn{background:#002266;box-shadow:0 4px 0 #000d33;}
-  #question-area.boss3-fight .answer-btn{background:#6b0000;box-shadow:0 4px 0 #2a0000;}
-  #question-area.boss1-fight .answer-btn:hover{background:#aa4400;}
-  #question-area.boss2-fight .answer-btn:hover{background:#0033aa;}
-  #question-area.boss3-fight .answer-btn:hover{background:#a00000;}
-  @keyframes cpulse{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
-  @keyframes cshake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-
-  #feedback{font-size:12px;min-height:20px;text-align:center;letter-spacing:1px;}
-  #lives-display{display:flex;gap:5px;align-items:center;flex-wrap:wrap;max-width:140px;justify-content:center;}
-  .heart{font-size:13px;}
-
-  /* OVERLAY */
-  #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:100;flex-direction:column;align-items:center;justify-content:center;gap:20px;font-family:'Press Start 2P',monospace;}
-  #overlay.show{display:flex;}
-  #overlay-title{font-size:22px;color:var(--coin);text-shadow:4px 4px 0 #333;text-align:center;line-height:1.6;}
-  #overlay-sub{font-size:10px;color:#fff;text-align:center;line-height:2.2;white-space:pre-line;}
-  #overlay-btn{background:var(--mario-red);color:#fff;border:4px solid #fff;padding:12px 24px;font-family:'Press Start 2P',monospace;font-size:12px;cursor:pointer;box-shadow:0 5px 0 #800;transition:transform .1s;margin-top:10px;}
-  #overlay-btn:hover{transform:scale(1.05);}
-  #overlay-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #800;}
-
-  @media(max-width:600px){
-    #answers-grid{grid-template-columns:repeat(2,1fr);}
-    #question-text{font-size:16px;}
-    #game-canvas{height:260px;}
+  /* HEADER */
+  header {
+    text-align: center;
+    padding: 48px 20px 32px;
+    position: relative;
   }
+  .header-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, rgba(34,211,238,0.15), rgba(167,139,250,0.15));
+    border: 1px solid rgba(34,211,238,0.3);
+    border-radius: 100px;
+    padding: 6px 18px;
+    font-size: 12px; font-weight: 800; letter-spacing: 2px;
+    color: var(--cyan); text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .header-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: clamp(32px, 6vw, 56px);
+    font-weight: 900;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 0%, var(--cyan) 50%, var(--purple) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+  }
+  .header-sub {
+    font-size: 16px; color: var(--sub); font-weight: 700;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .student-name {
+    color: var(--gold); font-weight: 900; font-size: 20px;
+    text-shadow: 0 0 20px rgba(251,191,36,0.5);
+  }
+
+  /* STARS decoration */
+  .stars {
+    display: flex; justify-content: center; gap: 6px; margin-top: 12px;
+  }
+  .stars span { font-size: 20px; animation: starPop 0.5s ease backwards; }
+  .stars span:nth-child(1){animation-delay:0.1s}
+  .stars span:nth-child(2){animation-delay:0.2s}
+  .stars span:nth-child(3){animation-delay:0.3s}
+  .stars span:nth-child(4){animation-delay:0.4s}
+  .stars span:nth-child(5){animation-delay:0.5s}
+  @keyframes starPop { from{transform:scale(0) rotate(-30deg);opacity:0} to{transform:scale(1) rotate(0);opacity:1} }
+
+  /* SECTION LABEL */
+  .section-label {
+    text-align: center;
+    font-size: 11px; font-weight: 800; letter-spacing: 3px;
+    color: var(--sub); text-transform: uppercase;
+    margin: 0 auto 24px;
+  }
+
+  /* GAMES GRID */
+  #games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 24px;
+    padding: 0 32px 64px;
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* GAME CARD */
+  .game-card {
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 24px;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s, border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+    animation: cardIn 0.5s ease backwards;
+    text-decoration: none; color: inherit; display: block;
+  }
+  .game-card:nth-child(1){ animation-delay:0.1s }
+  .game-card:nth-child(2){ animation-delay:0.25s }
+  .game-card:nth-child(3){ animation-delay:0.4s }
+  @keyframes cardIn { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+  .game-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    opacity: 0; transition: opacity 0.3s;
+    border-radius: 18px;
+  }
+  .game-card:hover { transform: translateY(-6px) scale(1.02); }
+  .game-card:hover::before { opacity: 1; }
+  .game-card:active { transform: translateY(-2px) scale(0.99); }
+
+  /* Card colors */
+  .card-mario {
+    border-color: #e52222;
+    --card-color: #e52222;
+    --card-glow: rgba(229,34,34,0.2);
+  }
+  .card-mario::before { background: linear-gradient(135deg, rgba(229,34,34,0.08), transparent); }
+  .card-mario:hover { border-color: #e52222; box-shadow: 0 16px 48px rgba(229,34,34,0.25); }
+
+  .card-body {
+    border-color: #22d3ee;
+    --card-color: #22d3ee;
+    --card-glow: rgba(34,211,238,0.2);
+  }
+  .card-body::before { background: linear-gradient(135deg, rgba(34,211,238,0.08), transparent); }
+  .card-body:hover { border-color: #22d3ee; box-shadow: 0 16px 48px rgba(34,211,238,0.25); }
+
+  .card-coming {
+    border-color: #374151; opacity: 0.6; cursor: not-allowed;
+  }
+  .card-coming:hover { transform: none; box-shadow: none; }
+
+  /* Card icon */
+  .card-icon-wrap {
+    width: 72px; height: 72px;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px;
+    margin-bottom: 18px;
+    position: relative;
+  }
+  .card-mario .card-icon-wrap  { background: rgba(229,34,34,0.15); }
+  .card-body .card-icon-wrap   { background: rgba(34,211,238,0.12); }
+  .card-coming .card-icon-wrap { background: rgba(55,65,81,0.5); }
+
+  /* Pixel sprite for Mario card */
+  .mario-pixel-sprite {
+    image-rendering: pixelated;
+    width: 40px; height: 48px;
+  }
+
+  .card-tag {
+    position: absolute; top: 18px; right: 18px;
+    font-size: 9px; font-weight: 800; letter-spacing: 1px;
+    padding: 3px 10px; border-radius: 100px;
+    text-transform: uppercase;
+  }
+  .tag-math   { background: rgba(229,34,34,0.2); color: #fca5a5; border: 1px solid rgba(229,34,34,0.3); }
+  .tag-bio    { background: rgba(34,211,238,0.15); color: #67e8f9; border: 1px solid rgba(34,211,238,0.3); }
+  .tag-soon   { background: rgba(55,65,81,0.5); color: #6b7280; border: 1px solid #374151; }
+
+  .card-title {
+    font-size: 20px; font-weight: 900; margin-bottom: 6px;
+    line-height: 1.2;
+  }
+  .card-mario .card-title  { color: #fca5a5; }
+  .card-body .card-title   { color: #67e8f9; }
+  .card-coming .card-title { color: #6b7280; }
+
+  .card-desc {
+    font-size: 13px; color: var(--sub); font-weight: 700;
+    line-height: 1.5; margin-bottom: 16px;
+  }
+
+  .card-meta {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .meta-pill {
+    font-size: 10px; font-weight: 800;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    padding: 3px 10px; border-radius: 100px;
+    color: #9ca3af;
+  }
+
+  /* CTA button inside card */
+  .card-cta {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 20px;
+    font-weight: 900; font-size: 13px;
+    padding: 10px 18px; border-radius: 10px;
+    width: fit-content;
+    transition: all 0.15s;
+  }
+  .card-mario .card-cta  { background: rgba(229,34,34,0.2); color: #fca5a5; }
+  .card-body .card-cta   { background: rgba(34,211,238,0.15); color: #67e8f9; }
+  .card-coming .card-cta { background: rgba(55,65,81,0.3); color: #6b7280; }
+  .game-card:hover .card-cta { filter: brightness(1.2); transform: translateX(4px); }
+  .card-coming:hover .card-cta { transform: none; filter: none; }
+
+  /* FOOTER */
+  footer {
+    margin-top: auto;
+    text-align: center;
+    padding: 20px;
+    font-size: 11px; color: #374151; font-weight: 700;
+    border-top: 1px solid var(--border);
+  }
+
+  /* MODAL for Mario game */
+  #game-modal {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.95); z-index: 500;
+    flex-direction: column;
+  }
+  #game-modal.open { display: flex; }
+  .modal-header {
+    background: #111827; border-bottom: 2px solid #1f2937;
+    padding: 10px 16px; display: flex; align-items: center; gap: 12px;
+    flex-shrink: 0;
+  }
+  .modal-title { font-weight: 900; font-size: 14px; color: var(--cyan); flex: 1; }
+  .modal-close {
+    background: #ef4444; color: #fff; border: none;
+    padding: 8px 16px; font-family:'Nunito',sans-serif; font-weight:900; font-size:13px;
+    cursor:pointer; border-radius:8px; transition: transform 0.1s;
+  }
+  .modal-close:hover { transform: scale(1.05); }
+  #game-iframe { flex:1; width:100%; border:none; background:#000; }
+
 </style>
 </head>
 <body>
-<div id="game-wrapper">
 
-  <!-- BANNER -->
-  <div id="player-banner">
-    <div id="player-banner-inner">
-      <span class="banner-item">🍄 ¡A JUGAR <span>DANIEL SALAZAR</span>! 🍄</span>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<div id="app">
+
+  <header>
+    <div class="header-badge">📚 Portal de Estudio — 3er Grado</div>
+    <h1 class="header-title">¡A Estudiar,<br>Daniel! 🚀</h1>
+    <div class="header-sub">Bienvenido, <span class="student-name">Daniel Salazar</span> 👋</div>
+    <div class="stars">
+      <span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span>
     </div>
-  </div>
+  </header>
 
-  <!-- HUD -->
-  <div id="hud">
-    <div class="score-block"><span>PUNTOS</span><span id="score-display">000000</span></div>
-    <div id="lives-display">
-      <span class="heart">❤️</span><span class="heart">❤️</span><span class="heart">❤️</span>
-      <span class="heart">❤️</span><span class="heart">❤️</span>
-    </div>
-    <div class="score-block"><span>META</span><span id="progress-display">0%</span></div>
-    <div class="score-block"><span>TABLA</span><span id="table-display">x1-x5</span></div>
-  </div>
+  <div class="section-label">Elige tu actividad</div>
 
-  <!-- SESSION -->
-  <div id="session-bar">
-    <span>SESIÓN HOY:</span>
-    <span class="session-item">🏆 VICTORIAS <span id="wins-count">0</span></span>
-    <span class="session-sep">|</span>
-    <span class="session-item">💀 DERROTAS <span id="losses-count">0</span></span>
-  </div>
+  <div id="games-grid">
 
-  <!-- GAME CANVAS -->
-  <div id="game-canvas">
-    <div class="cloud cloud1"></div>
-    <div class="cloud cloud2"></div>
-    <div class="cloud cloud3"></div>
-
-    <div class="pipe pipe1"></div>
-    <div class="pipe pipe2"></div>
-    <div class="pipe pipe3"></div>
-
-    <!-- ===== BOWSER JR — pipe1 (tabla x2) ===== -->
-    <div id="bjr-container" class="boss-container">
-      <div id="bjr-label" class="boss-label">⚡BOWSER JR⚡</div>
-      <div id="bjr-hp-bar" class="boss-hp-bar"><div id="bjr-hp-fill" class="boss-hp-fill"></div></div>
-      <div id="bjr-wrap" class="boss-wrap idle">
-        <svg width="60" height="66" viewBox="0 0 60 66" xmlns="http://www.w3.org/2000/svg">
-          <!-- Bib / bandana -->
-          <ellipse cx="30" cy="46" rx="20" ry="14" fill="#ffffff"/>
-          <ellipse cx="30" cy="46" rx="16" ry="11" fill="#ffffff"/>
-          <!-- Bib skull doodle -->
-          <circle cx="30" cy="43" r="4" fill="#888"/>
-          <rect x="27" y="46" width="6" height="4" rx="1" fill="#888"/>
-          <circle cx="28" cy="42" r="1" fill="#fff"/>
-          <circle cx="32" cy="42" r="1" fill="#fff"/>
-          <!-- Body shell -->
-          <ellipse cx="30" cy="44" rx="19" ry="14" fill="#00aa00"/>
-          <!-- Shell highlight -->
-          <ellipse cx="30" cy="40" rx="12" ry="7" fill="#00cc00" opacity="0.5"/>
-          <!-- Head -->
-          <ellipse cx="30" cy="22" rx="18" ry="17" fill="#3a7000"/>
-          <!-- Snout -->
-          <ellipse cx="30" cy="27" rx="10" ry="7" fill="#50a010"/>
-          <!-- Nostrils -->
-          <circle cx="26" cy="25" r="1.5" fill="#1a5000"/>
-          <circle cx="34" cy="25" r="1.5" fill="#1a5000"/>
-          <!-- Eyes -->
-          <ellipse cx="22" cy="17" rx="5.5" ry="6" fill="#fff"/>
-          <ellipse cx="38" cy="17" rx="5.5" ry="6" fill="#fff"/>
-          <circle cx="23" cy="18" r="3.5" fill="#e00"/>
-          <circle cx="39" cy="18" r="3.5" fill="#e00"/>
-          <circle cx="24" cy="17" r="1.8" fill="#000"/>
-          <circle cx="40" cy="17" r="1.8" fill="#000"/>
-          <!-- Eyebrows (angry) -->
-          <rect x="16" y="10" width="11" height="3" rx="1.5" fill="#1a5000" transform="rotate(-15,21,11)"/>
-          <rect x="33" y="10" width="11" height="3" rx="1.5" fill="#1a5000" transform="rotate(15,39,11)"/>
-          <!-- Mini horn -->
-          <polygon points="22,7 19,0 27,9"  fill="#f8d038"/>
-          <polygon points="38,7 41,0 33,9" fill="#f8d038"/>
-          <!-- Mouth -->
-          <rect x="23" y="30" width="14" height="4" rx="2" fill="#1a5000"/>
-          <rect x="24" y="30" width="3" height="4" rx="1" fill="#fff"/>
-          <rect x="29" y="30" width="3" height="4" rx="1" fill="#fff"/>
-          <rect x="34" y="30" width="3" height="4" rx="1" fill="#fff"/>
-          <!-- Arms -->
-          <rect x="2"  y="40" width="12" height="8" rx="4" fill="#3a7000"/>
-          <rect x="46" y="40" width="12" height="8" rx="4" fill="#3a7000"/>
-          <!-- Claws -->
-          <polygon points="2,48 0,54 6,51"   fill="#f8d038"/>
-          <polygon points="6,50 4,56 10,53"  fill="#f8d038"/>
-          <polygon points="58,48 60,54 54,51" fill="#f8d038"/>
-          <polygon points="54,50 56,56 50,53" fill="#f8d038"/>
-          <!-- Feet -->
-          <ellipse cx="22" cy="58" rx="9" ry="5" fill="#3a7000"/>
-          <ellipse cx="38" cy="58" rx="9" ry="5" fill="#3a7000"/>
-          <!-- Toe claws -->
-          <polygon points="14,58 11,63 18,61" fill="#f8d038"/>
-          <polygon points="20,60 17,65 23,63" fill="#f8d038"/>
-          <polygon points="40,60 37,65 43,63" fill="#f8d038"/>
-          <polygon points="46,58 43,63 50,61" fill="#f8d038"/>
+    <!-- MARIO MATH -->
+    <div class="game-card card-mario" onclick="openMario()">
+      <div class="card-tag tag-math">Matemáticas</div>
+      <div class="card-icon-wrap">
+        <svg class="mario-pixel-sprite" viewBox="0 0 40 48" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="2"  width="22" height="6"  fill="#e52222"/>
+          <rect x="6"  y="8"  width="30" height="4"  fill="#e52222"/>
+          <rect x="8"  y="12" width="24" height="14" fill="#f4a050"/>
+          <rect x="14" y="14" width="4"  height="4"  fill="#000"/>
+          <rect x="22" y="14" width="4"  height="4"  fill="#000"/>
+          <rect x="10" y="20" width="20" height="3"  fill="#5a2800"/>
+          <rect x="6"  y="26" width="28" height="12" fill="#2038ec"/>
+          <rect x="18" y="27" width="4"  height="3"  fill="#f4a050"/>
+          <rect x="0"  y="26" width="6"  height="8"  fill="#e52222"/>
+          <rect x="34" y="26" width="6"  height="8"  fill="#e52222"/>
+          <rect x="0"  y="34" width="6"  height="4"  fill="#f4a050"/>
+          <rect x="34" y="34" width="6"  height="4"  fill="#f4a050"/>
+          <rect x="8"  y="38" width="10" height="8"  fill="#c84c0c"/>
+          <rect x="22" y="38" width="10" height="8"  fill="#c84c0c"/>
+          <rect x="6"  y="44" width="12" height="4"  fill="#5a2800"/>
+          <rect x="22" y="44" width="12" height="4"  fill="#5a2800"/>
         </svg>
       </div>
-    </div>
-
-    <!-- ===== BUM BUM — pipe2 (tabla x3) ===== -->
-    <div id="bumbum-container" class="boss-container">
-      <div id="bumbum-label" class="boss-label">💀 BUM BUM 💀</div>
-      <div id="bumbum-hp-bar" class="boss-hp-bar"><div id="bumbum-hp-fill" class="boss-hp-fill"></div></div>
-      <div id="bumbum-wrap" class="boss-wrap idle">
-        <svg width="66" height="72" viewBox="0 0 66 72" xmlns="http://www.w3.org/2000/svg">
-          <!-- Shell back dark -->
-          <ellipse cx="33" cy="50" rx="26" ry="18" fill="#1a1a6e"/>
-          <!-- Shell ring -->
-          <ellipse cx="33" cy="50" rx="20" ry="13" fill="#2828aa"/>
-          <ellipse cx="33" cy="50" rx="14" ry="9"  fill="#3838cc"/>
-          <!-- Body -->
-          <rect x="18" y="44" width="30" height="20" rx="6" fill="#2020aa"/>
-          <!-- Chest plate -->
-          <ellipse cx="33" cy="54" rx="10" ry="8" fill="#4444cc"/>
-          <!-- Head — round dark -->
-          <ellipse cx="33" cy="24" rx="21" ry="20" fill="#1a1a6e"/>
-          <!-- Skull face mask -->
-          <ellipse cx="33" cy="26" rx="15" ry="14" fill="#2a2a8e"/>
-          <!-- Eye sockets (hollow) -->
-          <ellipse cx="25" cy="22" rx="6" ry="7" fill="#000"/>
-          <ellipse cx="41" cy="22" rx="6" ry="7" fill="#000"/>
-          <!-- Eye glow yellow -->
-          <circle cx="25" cy="22" r="3.5" fill="#ffee00"/>
-          <circle cx="41" cy="22" r="3.5" fill="#ffee00"/>
-          <circle cx="25" cy="22" r="1.5" fill="#000"/>
-          <circle cx="41" cy="22" r="1.5" fill="#000"/>
-          <!-- Nose hole -->
-          <ellipse cx="33" cy="30" rx="3" ry="2" fill="#000"/>
-          <!-- Mouth teeth bar -->
-          <rect x="24" y="33" width="18" height="6" rx="2" fill="#000"/>
-          <rect x="25" y="33" width="3" height="6" rx="1" fill="#fff"/>
-          <rect x="30" y="33" width="3" height="6" rx="1" fill="#fff"/>
-          <rect x="35" y="33" width="3" height="6" rx="1" fill="#fff"/>
-          <rect x="40" y="33" width="3" height="6" rx="1" fill="#fff"/>
-          <!-- Spikes top -->
-          <polygon points="20,8 17,0 25,10"  fill="#4444dd"/>
-          <polygon points="33,5 31,0 37,8"   fill="#4444dd"/>
-          <polygon points="46,8 49,0 41,10" fill="#4444dd"/>
-          <!-- Arms -->
-          <rect x="2"  y="44" width="16" height="10" rx="5" fill="#1a1a6e"/>
-          <rect x="48" y="44" width="16" height="10" rx="5" fill="#1a1a6e"/>
-          <!-- Wristbands -->
-          <rect x="2"  y="50" width="16" height="4" rx="2" fill="#4444cc"/>
-          <rect x="48" y="50" width="16" height="4" rx="2" fill="#4444cc"/>
-          <!-- Fists -->
-          <circle cx="10" cy="58" r="6" fill="#2828aa"/>
-          <circle cx="56" cy="58" r="6" fill="#2828aa"/>
-          <!-- Feet -->
-          <ellipse cx="25" cy="66" rx="10" ry="5" fill="#1a1a6e"/>
-          <ellipse cx="41" cy="66" rx="10" ry="5" fill="#1a1a6e"/>
-        </svg>
+      <div class="card-title">MathBros 🍄</div>
+      <div class="card-desc">¡Ayuda a Mario a llegar a la meta respondiendo las tablas de multiplicar! Derrota a Bowser Jr., Bum Bum y al gran Bowser.</div>
+      <div class="card-meta">
+        <span class="meta-pill">× Tablas del 1 al 5</span>
+        <span class="meta-pill">🏆 3 jefes</span>
+        <span class="meta-pill">💀 5 vidas</span>
       </div>
+      <div class="card-cta">🎮 ¡Jugar ahora! →</div>
     </div>
 
-    <!-- ===== BOWSER — pipe3 (tabla libre) ===== -->
-    <div id="bowser-container" class="boss-container">
-      <div id="bowser-label" class="boss-label">⚡ BOWSER ⚡</div>
-      <div id="bowser-hp-bar" class="boss-hp-bar"><div id="bowser-hp-fill" class="boss-hp-fill"></div></div>
-      <div id="bowser-wrap" class="boss-wrap idle">
-        <svg width="72" height="82" viewBox="0 0 72 82" xmlns="http://www.w3.org/2000/svg">
-          <!-- Shell -->
-          <ellipse cx="36" cy="52" rx="28" ry="22" fill="#4a7a00"/>
-          <polygon points="14,34 8,19 22,32"  fill="#7aaa00"/>
-          <polygon points="36,28 33,12 44,27" fill="#7aaa00"/>
-          <polygon points="58,34 64,19 50,32" fill="#7aaa00"/>
-          <!-- Body -->
-          <rect x="20" y="46" width="32" height="24" rx="6" fill="#3a7000"/>
-          <!-- Belly -->
-          <ellipse cx="36" cy="58" rx="12" ry="10" fill="#6ab020"/>
-          <!-- Head -->
-          <ellipse cx="36" cy="27" rx="22" ry="20" fill="#3a7000"/>
-          <!-- Snout -->
-          <ellipse cx="36" cy="33" rx="13" ry="9" fill="#50a010"/>
-          <circle cx="30" cy="31" r="2" fill="#1a5000"/>
-          <circle cx="42" cy="31" r="2" fill="#1a5000"/>
-          <!-- Eyes -->
-          <ellipse cx="25" cy="21" rx="7" ry="8" fill="#fff"/>
-          <ellipse cx="47" cy="21" rx="7" ry="8" fill="#fff"/>
-          <circle cx="26" cy="22" r="4.5" fill="#dd0000"/>
-          <circle cx="48" cy="22" r="4.5" fill="#dd0000"/>
-          <circle cx="27" cy="22" r="2"   fill="#000"/>
-          <circle cx="49" cy="22" r="2"   fill="#000"/>
-          <!-- Eyebrows -->
-          <rect x="17" y="12" width="14" height="4" rx="2" fill="#1a5000" transform="rotate(-12,24,14)"/>
-          <rect x="41" y="12" width="14" height="4" rx="2" fill="#1a5000" transform="rotate(12,48,14)"/>
-          <!-- Horns -->
-          <polygon points="21,9 15,0 28,11"  fill="#f8d038"/>
-          <polygon points="51,9 57,0 44,11" fill="#f8d038"/>
-          <!-- Mouth -->
-          <rect x="26" y="37" width="20" height="6" rx="2" fill="#1a5000"/>
-          <rect x="28" y="37" width="4" height="6" rx="1" fill="#fff"/>
-          <rect x="34" y="37" width="4" height="6" rx="1" fill="#fff"/>
-          <rect x="40" y="37" width="4" height="6" rx="1" fill="#fff"/>
-          <!-- Arms -->
-          <rect x="3"  y="48" width="17" height="12" rx="5" fill="#3a7000"/>
-          <rect x="52" y="48" width="17" height="12" rx="5" fill="#3a7000"/>
-          <!-- Claws left -->
-          <polygon points="3,60 0,67 7,63"   fill="#f8d038"/>
-          <polygon points="8,62 5,69 12,65"  fill="#f8d038"/>
-          <!-- Claws right -->
-          <polygon points="69,60 72,67 65,63" fill="#f8d038"/>
-          <polygon points="64,62 67,69 60,65" fill="#f8d038"/>
-          <!-- Feet -->
-          <ellipse cx="27" cy="72" rx="11" ry="7" fill="#3a7000"/>
-          <ellipse cx="45" cy="72" rx="11" ry="7" fill="#3a7000"/>
-          <!-- Toe claws -->
-          <polygon points="17,72 13,78 21,75" fill="#f8d038"/>
-          <polygon points="24,74 20,80 28,77" fill="#f8d038"/>
-          <polygon points="44,74 40,80 48,77" fill="#f8d038"/>
-          <polygon points="55,72 51,78 59,75" fill="#f8d038"/>
-        </svg>
+    <!-- BODY PUZZLE -->
+    <div class="game-card card-body" onclick="window.location.href='body-puzzle.html'">
+      <div class="card-tag tag-bio">Ciencias</div>
+      <div class="card-icon-wrap">🫀</div>
+      <div class="card-title">Cuerpo Humano 🦴</div>
+      <div class="card-desc">Arma el rompecabezas del cuerpo humano colocando los huesos y músculos en su lugar correcto. ¡20 piezas!</div>
+      <div class="card-meta">
+        <span class="meta-pill">🦴 10 huesos</span>
+        <span class="meta-pill">💪 10 músculos</span>
+        <span class="meta-pill">🔬 Sistema óseo y muscular</span>
       </div>
+      <div class="card-cta">🧩 ¡Armar rompecabezas! →</div>
     </div>
 
-    <canvas id="fireworks-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:50;display:none;"></canvas>
-    <div id="progress-bar-track"><div id="progress-fill"></div></div>
-    <div id="ground"></div>
-
-    <div id="flag">
-      <div id="flag-banner"></div>
-      <div id="flag-pole"></div>
-      <div id="flag-star">⭐</div>
+    <!-- COMING SOON -->
+    <div class="game-card card-coming">
+      <div class="card-tag tag-soon">Próximamente</div>
+      <div class="card-icon-wrap">🌍</div>
+      <div class="card-title">Geografía</div>
+      <div class="card-desc">Aprende los países de América Central y del Mundo con mapas interactivos. ¡Muy pronto!</div>
+      <div class="card-meta">
+        <span class="meta-pill">🗺️ Mapas</span>
+        <span class="meta-pill">🌎 Capitales</span>
+      </div>
+      <div class="card-cta">🔒 Próximamente...</div>
     </div>
 
-    <!-- MARIO -->
-    <div id="mario">
-      <svg class="mario-svg" viewBox="0 0 40 48" xmlns="http://www.w3.org/2000/svg">
-        <rect x="10" y="2"  width="22" height="6"  fill="#e52222"/>
-        <rect x="6"  y="8"  width="30" height="4"  fill="#e52222"/>
-        <rect x="8"  y="12" width="24" height="14" fill="#f4a050"/>
-        <rect x="14" y="14" width="4"  height="4"  fill="#000"/>
-        <rect x="22" y="14" width="4"  height="4"  fill="#000"/>
-        <rect x="10" y="20" width="20" height="3"  fill="#5a2800"/>
-        <rect x="6"  y="26" width="28" height="12" fill="#2038ec"/>
-        <rect x="18" y="27" width="4"  height="3"  fill="#f4a050"/>
-        <rect x="0"  y="26" width="6"  height="8"  fill="#e52222"/>
-        <rect x="34" y="26" width="6"  height="8"  fill="#e52222"/>
-        <rect x="0"  y="34" width="6"  height="4"  fill="#f4a050"/>
-        <rect x="34" y="34" width="6"  height="4"  fill="#f4a050"/>
-        <rect x="8"  y="38" width="10" height="8"  fill="#c84c0c"/>
-        <rect x="22" y="38" width="10" height="8"  fill="#c84c0c"/>
-        <rect x="6"  y="44" width="12" height="4"  fill="#5a2800"/>
-        <rect x="22" y="44" width="12" height="4"  fill="#5a2800"/>
-      </svg>
-    </div>
-  </div><!-- /game-canvas -->
-
-  <!-- QUESTION AREA -->
-  <div id="question-area">
-    <div id="question-title">¡RESPONDE PARA AVANZAR!</div>
-    <div id="question-text">¿Cuánto es <span id="q-num">3 × 4</span>?</div>
-    <div id="boss-status"></div>
-    <div id="answers-grid"></div>
-    <div id="feedback" style="color:#fff;">Elige la respuesta correcta para que Mario avance 🍄</div>
   </div>
 
-</div><!-- /game-wrapper -->
+  <footer>
+    Hecho con ❤️ para Daniel Salazar • Estudios 3er Grado 2025
+  </footer>
 
-<!-- OVERLAY -->
-<div id="overlay">
-  <div id="overlay-title"></div>
-  <div id="overlay-sub"></div>
-  <button id="overlay-btn" onclick="startGame()">▶ JUGAR DE NUEVO</button>
+</div><!-- /app -->
+
+<!-- MARIO GAME MODAL -->
+<div id="game-modal">
+  <div class="modal-header">
+    <span class="modal-title">🍄 MathBros — Tablas de Multiplicar</span>
+    <button class="modal-close" onclick="closeMario()">✕ Cerrar</button>
+  </div>
+  <iframe id="game-iframe" src="" title="MathBros"></iframe>
 </div>
 
 <script>
-// ============================================================
-// CONSTANTS & STATE
-// ============================================================
-const MARIO_MIN_LEFT = 30;
-const STEP_FWD  = 4;
-const STEP_BACK = 3;
-const MAX_LIVES = 8;
-
-// Pipe checkpoints → grant +1 life (once each), approximate % triggers
-const PIPE_CHECKPOINTS  = [22, 48, 73];
-let   pipesPassed       = [false, false, false];
-
-// Boss definitions — triggered at given progress %
-// tabla: 2=tabla×2, 3=tabla×3, 0=any table (existing behavior)
-const BOSSES = [
-  { id:'bjr',    trigger:22, maxHp:2, tabla:2, modeClass:'boss1-mode', fightClass:'boss1-fight',
-    name:'⚡ BOWSER JR ⚡', color:'#ff8800', projectile:'💣', bonusScore:300 },
-  { id:'bumbum', trigger:48, maxHp:2, tabla:3, modeClass:'boss2-mode', fightClass:'boss2-fight',
-    name:'💀 BUM BUM 💀',  color:'#44aaff', projectile:'💀', bonusScore:400 },
-  { id:'bowser', trigger:73, maxHp:2, tabla:0, modeClass:'boss3-mode', fightClass:'boss3-fight',
-    name:'⚡ BOWSER ⚡',   color:'#ff4400', projectile:'🔥', bonusScore:500 },
-];
-
-let score = 0, lives = 5, progress = 0;
-let currentQuestion = null, answering = true;
-let sessionWins = 0, sessionLosses = 0;
-
-// Active boss state
-let activeBossIdx  = -1;   // index into BOSSES array, -1 = none
-let bossDefeated   = [false, false, false];
-let bossHP         = [0, 0, 0];
-let bossWrongStreak = 0;
-let bossRightStreak = 0;
-
-// ============================================================
-// QUESTION GENERATOR
-// ============================================================
-function generateQuestion(tabla) {
-  // tabla=0 → any table 1-5; tabla=N → forced table N
-  const a = tabla > 0 ? tabla : (Math.floor(Math.random() * 5) + 1);
-  const b = Math.floor(Math.random() * 10) + 1;
-  const correct = a * b;
-  const wrongs = new Set();
-  while (wrongs.size < 3) {
-    let w = correct + (Math.floor(Math.random() * 16) - 8);
-    if (w > 0 && w !== correct) wrongs.add(w);
+  function openMario() {
+    document.getElementById('game-iframe').src = 'mario-math.html';
+    document.getElementById('game-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
   }
-  return { a, b, correct, options: [...wrongs, correct].sort(() => Math.random() - 0.5) };
-}
-
-// ============================================================
-// RENDER QUESTION
-// ============================================================
-function renderQuestion() {
-  if (!answering) return;
-
-  const boss    = activeBossIdx >= 0 ? BOSSES[activeBossIdx] : null;
-  const tabla   = boss ? boss.tabla : 0;
-  currentQuestion = generateQuestion(tabla);
-
-  document.getElementById('q-num').textContent = `${currentQuestion.a} × ${currentQuestion.b}`;
-
-  const qa    = document.getElementById('question-area');
-  const title = document.getElementById('question-title');
-  const bstat = document.getElementById('boss-status');
-
-  // Remove all boss fight classes
-  qa.classList.remove('boss1-fight','boss2-fight','boss3-fight');
-
-  if (boss) {
-    qa.classList.add(boss.fightClass);
-    title.textContent = `⚔️ ${boss.name}`;
-    bstat.style.display = 'block';
-    refreshBossStatus(boss);
-    const tablaLabel = boss.tabla > 0 ? `tabla del ×${boss.tabla}` : 'cualquier tabla';
-    showFeedback(`${boss.projectile} ¡Acierta 2 seguidas (${tablaLabel}) para vencer!`, boss.color);
-  } else {
-    title.textContent = '¡RESPONDE PARA AVANZAR!';
-    bstat.style.display = 'none';
-    showFeedback('Elige la respuesta correcta para que Mario avance 🍄', '#fff');
+  function closeMario() {
+    document.getElementById('game-modal').classList.remove('open');
+    document.getElementById('game-iframe').src = '';
+    document.body.style.overflow = '';
   }
-
-  const grid = document.getElementById('answers-grid');
-  grid.innerHTML = '';
-  currentQuestion.options.forEach(opt => {
-    const btn = document.createElement('button');
-    btn.className = 'answer-btn';
-    btn.textContent = opt;
-    btn.onclick = () => handleAnswer(opt, btn);
-    grid.appendChild(btn);
+  // Close modal with Escape key
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeMario();
   });
-}
-
-function refreshBossStatus(boss) {
-  const hits   = '⚔️'.repeat(bossRightStreak) || '—';
-  const misses = '❌'.repeat(bossWrongStreak)  || '—';
-  const warn   = bossWrongStreak === 1 ? ` ⚠️ ¡Un fallo más y ataca!` : '';
-  const tablaInfo = boss.tabla > 0 ? ` | Tabla: ×${boss.tabla}` : '';
-  document.getElementById('boss-status').innerHTML =
-    `Golpes: ${hits} &nbsp;|&nbsp; Fallos seguidos: ${misses}${warn}${tablaInfo}`;
-}
-
-// ============================================================
-// HANDLE ANSWER
-// ============================================================
-function handleAnswer(chosen, btn) {
-  if (!answering) return;
-  answering = false;
-  const allBtns = document.querySelectorAll('.answer-btn');
-  allBtns.forEach(b => b.disabled = true);
-
-  const isCorrect = chosen === currentQuestion.correct;
-  const boss = activeBossIdx >= 0 ? BOSSES[activeBossIdx] : null;
-
-  if (isCorrect) {
-    btn.classList.add('correct');
-    score += currentQuestion.a * currentQuestion.b * 10;
-    updateScore();
-    spawnCoin();
-    marioJump();
-
-    if (boss) {
-      bossWrongStreak = 0;
-      bossRightStreak++;
-      bossHP[activeBossIdx]--;
-      updateBossHP(activeBossIdx);
-      animBoss(activeBossIdx, 'hit');
-
-      if (bossHP[activeBossIdx] <= 0) {
-        showFeedback(`💥 ¡${boss.name} DERROTADO! ¡Sigue adelante!`, '#f8d038');
-        setTimeout(() => defeatBoss(activeBossIdx), 700);
-        return;
-      } else {
-        showFeedback(`⚔️ ¡Buen golpe! ¡Un acierto más para acabarlo!`, '#00ff00');
-      }
-    } else {
-      progress = Math.min(100, progress + STEP_FWD);
-      updateProgress();
-      if (progress >= 100) { setTimeout(showWin, 1000); return; }
-    }
-
-  } else {
-    // WRONG
-    btn.classList.add('wrong');
-    allBtns.forEach(b => {
-      if (parseInt(b.textContent) === currentQuestion.correct) b.classList.add('correct');
-    });
-
-    if (boss) {
-      bossRightStreak = 0;
-      bossWrongStreak++;
-      animBoss(activeBossIdx, 'attacking');
-
-      if (bossWrongStreak >= 2) {
-        bossWrongStreak = 0;
-        lives--;
-        updateLives();
-        spawnProjectile(activeBossIdx);
-        marioHurt();
-        progress = Math.max(0, progress - STEP_BACK * 2);
-        updateProgress();
-        showFeedback(`${boss.projectile} ¡${boss.name} te atacó! Mario retrocede...`, '#ff3300');
-        if (lives <= 0) { setTimeout(showGameOver, 1200); return; }
-      } else {
-        showFeedback(`❌ Era ${currentQuestion.correct}. ¡Cuidado, un fallo más y ataca!`, '#ff8800');
-      }
-
-    } else {
-      lives--;
-      updateLives();
-      marioHurt();
-      progress = Math.max(0, progress - STEP_BACK);
-      updateProgress();
-      showFeedback(`❌ Era ${currentQuestion.correct}. Mario retrocede...`, '#ff4444');
-      if (lives <= 0) { setTimeout(showGameOver, 1200); return; }
-    }
-  }
-
-  setTimeout(() => { answering = true; renderQuestion(); }, 1400);
-}
-
-// ============================================================
-// BOSS TRIGGER CHECK (called after progress updates)
-// ============================================================
-function checkBossTriggers() {
-  if (activeBossIdx >= 0) return; // already in a fight
-  for (let i = 0; i < BOSSES.length; i++) {
-    const b = BOSSES[i];
-    if (!bossDefeated[i] && progress >= b.trigger) {
-      activateBoss(i);
-      break;
-    }
-  }
-}
-
-function activateBoss(i) {
-  activeBossIdx   = i;
-  bossHP[i]       = BOSSES[i].maxHp;
-  bossWrongStreak = 0;
-  bossRightStreak = 0;
-  const container = document.getElementById(`${BOSSES[i].id}-container`);
-  container.classList.add('visible');
-  document.getElementById(`${BOSSES[i].id}-hp-bar`).style.display = 'block';
-  document.getElementById(`${BOSSES[i].id}-label`).style.display  = 'block';
-  document.getElementById('game-canvas').classList.add(BOSSES[i].modeClass);
-  updateBossHP(i);
-}
-
-function updateBossHP(i) {
-  document.getElementById(`${BOSSES[i].id}-hp-fill`).style.width =
-    (bossHP[i] / BOSSES[i].maxHp * 100) + '%';
-}
-
-function animBoss(i, cls) {
-  const w = document.getElementById(`${BOSSES[i].id}-wrap`);
-  w.classList.remove('idle','hit','attacking','defeated');
-  void w.offsetWidth;
-  w.classList.add(cls);
-  w.addEventListener('animationend', () => {
-    w.classList.remove(cls);
-    if (cls !== 'defeated') w.classList.add('idle');
-  }, { once: true });
-}
-
-function defeatBoss(i) {
-  bossDefeated[i] = true;
-  animBoss(i, 'defeated');
-  document.getElementById('game-canvas').classList.remove(BOSSES[i].modeClass);
-  document.getElementById('question-area').classList.remove(BOSSES[i].fightClass);
-  document.getElementById('question-title').textContent = '¡RESPONDE PARA AVANZAR!';
-  document.getElementById('boss-status').style.display  = 'none';
-  activeBossIdx = -1;
-  score += BOSSES[i].bonusScore;
-  updateScore();
-  setTimeout(() => {
-    document.getElementById(`${BOSSES[i].id}-container`).classList.remove('visible');
-    answering = true;
-    renderQuestion();
-  }, 2000);
-}
-
-// ============================================================
-// PROJECTILE ANIMATION
-// ============================================================
-function spawnProjectile(bossIdx) {
-  const boss = BOSSES[bossIdx];
-  const container = document.getElementById(`${boss.id}-container`);
-  const el = document.createElement('div');
-  el.className = 'fireball';
-  el.textContent = boss.projectile;
-  el.style.left   = (container.offsetLeft - 20) + 'px';
-  el.style.bottom = '120px';
-  document.getElementById('game-canvas').appendChild(el);
-  setTimeout(() => el.remove(), 800);
-}
-
-// ============================================================
-// PROGRESS + PIPE CHECKPOINTS
-// ============================================================
-function updateProgress() {
-  document.getElementById('progress-fill').style.width    = progress + '%';
-  document.getElementById('progress-display').textContent = Math.round(progress) + '%';
-  const w   = document.getElementById('game-canvas').offsetWidth;
-  const max = w - 80;
-  document.getElementById('mario').style.left =
-    (MARIO_MIN_LEFT + ((max - MARIO_MIN_LEFT) * progress / 100)) + 'px';
-
-  // Pipe life bonuses (only in normal mode, not mid-boss)
-  if (activeBossIdx < 0) {
-    PIPE_CHECKPOINTS.forEach((threshold, idx) => {
-      if (!pipesPassed[idx] && progress >= threshold) {
-        pipesPassed[idx] = true;
-        grantBonusLife(idx);
-      }
-    });
-    checkBossTriggers();
-  }
-}
-
-function grantBonusLife(pipeIdx) {
-  if (lives >= MAX_LIVES) return;
-  lives++;
-  updateLives();
-  playExtraLifeSound();
-  spawnHeartPop(pipeIdx);
-  const ld = document.getElementById('lives-display');
-  ld.style.filter = 'brightness(2) hue-rotate(80deg)';
-  setTimeout(() => { ld.style.filter = ''; }, 400);
-}
-
-function spawnHeartPop(pipeIdx) {
-  const pcts  = [0.20, 0.50, 0.75];
-  const canvas = document.getElementById('game-canvas');
-  const el = document.createElement('div');
-  el.className   = 'heart-pop';
-  el.textContent = '❤️ +1';
-  el.style.left   = (canvas.offsetWidth * pcts[pipeIdx] - 20) + 'px';
-  el.style.bottom = '80px';
-  canvas.appendChild(el);
-  setTimeout(() => el.remove(), 1200);
-}
-
-// ============================================================
-// HELPERS
-// ============================================================
-function spawnCoin() {
-  const mario = document.getElementById('mario');
-  const coin  = document.createElement('div');
-  coin.className   = 'coin-anim';
-  coin.textContent = '🪙';
-  coin.style.left   = (mario.offsetLeft + 10) + 'px';
-  coin.style.bottom = '100px';
-  document.getElementById('game-canvas').appendChild(coin);
-  setTimeout(() => coin.remove(), 900);
-}
-
-function marioJump() {
-  const el = document.getElementById('mario');
-  el.classList.remove('jumping','hurt'); void el.offsetWidth;
-  el.classList.add('jumping');
-  el.addEventListener('animationend', () => el.classList.remove('jumping'), { once: true });
-}
-function marioHurt() {
-  const el = document.getElementById('mario');
-  el.classList.remove('jumping','hurt'); void el.offsetWidth;
-  el.classList.add('hurt');
-  el.addEventListener('animationend', () => el.classList.remove('hurt'), { once: true });
-}
-
-function updateScore() {
-  document.getElementById('score-display').textContent = String(score).padStart(6,'0');
-}
-function updateLives() {
-  document.querySelectorAll('.heart').forEach((h,i) => { h.textContent = i < lives ? '❤️' : '🖤'; });
-}
-function showFeedback(msg, color) {
-  const el = document.getElementById('feedback');
-  el.textContent = msg; el.style.color = color;
-}
-
-// ============================================================
-// SOUNDS
-// ============================================================
-function playExtraLifeSound() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    [[523.25,0],[659.25,0.1],[783.99,0.2],[1046.5,0.32]].forEach(([freq,delay]) => {
-      const osc = ctx.createOscillator(), gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.type = 'square'; osc.frequency.value = freq;
-      const t = ctx.currentTime + delay;
-      gain.gain.setValueAtTime(0.15,t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t+0.18);
-      osc.start(t); osc.stop(t+0.18);
-    });
-  } catch(e) {}
-}
-
-function playMarioWin() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const notes = [
-      [523.25,0.12],[659.25,0.12],[783.99,0.12],
-      [1046.5,0.22],[783.99,0.10],[1046.5,0.40],
-      [0,0.05],
-      [880.00,0.14],[1108.73,0.14],[1318.51,0.14],
-      [1760.00,0.35]
-    ];
-    let t = ctx.currentTime + 0.05;
-    notes.forEach(([freq,dur]) => {
-      if (freq===0){t+=dur;return;}
-      const osc=ctx.createOscillator(),gain=ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.type='square'; osc.frequency.setValueAtTime(freq,t);
-      gain.gain.setValueAtTime(0.18,t);
-      gain.gain.exponentialRampToValueAtTime(0.001,t+dur);
-      osc.start(t); osc.stop(t+dur); t+=dur;
-    });
-  } catch(e){}
-}
-
-// ============================================================
-// FIREWORKS
-// ============================================================
-let fwAnimId = null;
-function startFireworks() {
-  const canvas = document.getElementById('fireworks-canvas');
-  canvas.style.display = 'block';
-  canvas.width  = canvas.offsetWidth;
-  canvas.height = canvas.offsetHeight;
-  const ctx    = canvas.getContext('2d');
-  const parts  = [];
-  const colors = ['#f8d038','#ff4444','#44aaff','#44ff88','#ff88ff','#ffffff','#ff8800'];
-  function burst() {
-    const x = 60 + Math.random()*(canvas.width-120);
-    const y = 30 + Math.random()*(canvas.height*0.6);
-    const c = colors[Math.floor(Math.random()*colors.length)];
-    for(let i=0;i<40;i++){
-      const a=(Math.PI*2/40)*i+Math.random()*0.3, sp=2+Math.random()*4;
-      parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,alpha:1,color:c,radius:2+Math.random()*2,decay:0.015+Math.random()*0.01});
-    }
-  }
-  let t=0;
-  function loop(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    if(t++%28===0) burst();
-    for(let i=parts.length-1;i>=0;i--){
-      const p=parts[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.08; p.vx*=0.98; p.alpha-=p.decay;
-      if(p.alpha<=0){parts.splice(i,1);continue;}
-      ctx.save(); ctx.globalAlpha=p.alpha; ctx.fillStyle=p.color;
-      ctx.shadowColor=p.color; ctx.shadowBlur=6;
-      ctx.beginPath(); ctx.arc(p.x,p.y,p.radius,0,Math.PI*2); ctx.fill(); ctx.restore();
-    }
-    fwAnimId=requestAnimationFrame(loop);
-  }
-  burst(); burst(); loop();
-}
-function stopFireworks() {
-  if(fwAnimId){cancelAnimationFrame(fwAnimId);fwAnimId=null;}
-  const canvas=document.getElementById('fireworks-canvas');
-  canvas.style.display='none';
-  canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
-}
-
-// ============================================================
-// WIN / GAME OVER
-// ============================================================
-function showWin() {
-  sessionWins++;
-  document.getElementById('wins-count').textContent = sessionWins;
-  playMarioWin();
-  startFireworks();
-  setTimeout(() => {
-    document.getElementById('overlay-title').textContent = '🏆 ¡GANASTE! 🏆';
-    document.getElementById('overlay-sub').textContent =
-      `¡DANIEL SALAZAR llegó a la meta!\nPuntos: ${String(score).padStart(6,'0')}\n¡Eres un crack en las tablas! 🏆\n\n🏆 Victorias hoy: ${sessionWins}  💀 Derrotas: ${sessionLosses}`;
-    document.getElementById('overlay').classList.add('show');
-  }, 1800);
-}
-
-function showGameOver() {
-  sessionLosses++;
-  document.getElementById('losses-count').textContent = sessionLosses;
-  document.getElementById('overlay-title').textContent = '💀 GAME OVER 💀';
-  document.getElementById('overlay-sub').textContent =
-    `¡Ánimo DANIEL SALAZAR!\nPerdiste todas las vidas...\nPuntos: ${String(score).padStart(6,'0')}\n¡Inténtalo de nuevo!\n\n🏆 Victorias hoy: ${sessionWins}  💀 Derrotas: ${sessionLosses}`;
-  document.getElementById('overlay').classList.add('show');
-}
-
-// ============================================================
-// START / RESTART
-// ============================================================
-function startGame() {
-  stopFireworks();
-  score=0; lives=5; progress=0; answering=true;
-  pipesPassed=[false,false,false];
-  activeBossIdx=-1;
-  bossDefeated=[false,false,false];
-  bossHP=[0,0,0];
-  bossWrongStreak=0; bossRightStreak=0;
-
-  document.getElementById('overlay').classList.remove('show');
-  const gc = document.getElementById('game-canvas');
-  gc.classList.remove('boss1-mode','boss2-mode','boss3-mode');
-  const qa = document.getElementById('question-area');
-  qa.classList.remove('boss1-fight','boss2-fight','boss3-fight');
-  document.getElementById('question-title').textContent='¡RESPONDE PARA AVANZAR!';
-  document.getElementById('boss-status').style.display='none';
-
-  // Reset all bosses
-  BOSSES.forEach(b => {
-    const c = document.getElementById(`${b.id}-container`);
-    c.classList.remove('visible');
-    document.getElementById(`${b.id}-hp-bar`).style.display = 'none';
-    document.getElementById(`${b.id}-label`).style.display  = 'none';
-    document.getElementById(`${b.id}-hp-fill`).style.width  = '100%';
-    const w = document.getElementById(`${b.id}-wrap`);
-    w.classList.remove('defeated','hit','attacking');
-    w.classList.add('idle');
-  });
-
-  const mario = document.getElementById('mario');
-  mario.classList.remove('jumping','hurt');
-  mario.style.left = MARIO_MIN_LEFT + 'px';
-
-  updateScore(); updateLives(); updateProgress();
-  renderQuestion();
-}
-
-startGame();
 </script>
+
 </body>
 </html>
