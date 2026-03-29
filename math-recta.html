@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recta Numérica 🐸</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+  :root{
+    --bg:#0a1a0a; --panel:#0f2210; --border:#1a3a1a;
+    --green:#4ade80; --lime:#a3e635; --gold:#fbbf24;
+    --red:#f87171; --sky:#38bdf8; --text:#f0fff0;
+    --frog:#22c55e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 10%,rgba(74,222,128,.07) 0,transparent 70%);pointer-events:none;}
+
+  /* HEADER */
+  #header{background:rgba(0,10,0,.95);border-bottom:3px solid var(--green);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0;}
+  #header h1{font-size:clamp(14px,2.5vw,20px);font-weight:900;color:var(--green);text-shadow:0 0 20px rgba(74,222,128,.5);}
+  .back-btn{background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);color:#94a3b8;padding:7px 14px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;text-decoration:none;transition:all .2s;font-family:'Nunito',sans-serif;}
+  .back-btn:hover{background:rgba(255,255,255,.18);color:#fff;}
+
+  /* SCORE */
+  #score-row{background:var(--panel);border-bottom:2px solid var(--border);padding:7px 20px;display:flex;justify-content:center;gap:28px;font-size:13px;font-weight:900;flex-wrap:wrap;}
+  .sc{display:flex;flex-direction:column;align-items:center;gap:1px;}
+  .sc-label{font-size:8px;color:#4a7a4a;letter-spacing:2px;text-transform:uppercase;}
+
+  /* MAIN */
+  #main{flex:1;display:flex;flex-direction:column;align-items:center;padding:16px;gap:16px;overflow-y:auto;}
+
+  /* QUESTION */
+  #q-card{background:var(--panel);border:3px solid var(--border);border-radius:16px;padding:16px 24px;text-align:center;max-width:560px;width:100%;}
+  #q-label{font-size:9px;color:#4a7a4a;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;}
+  #q-text{font-size:clamp(15px,3vw,22px);font-weight:900;color:var(--text);line-height:1.5;}
+  #q-sub{font-size:12px;color:#4a7a4a;margin-top:5px;}
+
+  /* NUMBER LINE */
+  #numline-wrap{width:100%;max-width:620px;position:relative;background:var(--panel);border:2px solid var(--border);border-radius:16px;padding:20px 16px 12px;overflow:hidden;}
+  #numline-title{font-size:10px;color:#4a7a4a;letter-spacing:2px;text-transform:uppercase;text-align:center;margin-bottom:12px;}
+  #numline-svg{width:100%;overflow:visible;display:block;}
+
+  /* FROG animation */
+  @keyframes frogJump{0%{transform:translateY(0) scaleX(1)}25%{transform:translateY(-28px) scaleX(.85)}75%{transform:translateY(-28px) scaleX(.85)}100%{transform:translateY(0) scaleX(1)}}
+  .frog-jump{animation:frogJump .5s ease;}
+
+  /* ANSWER OPTIONS */
+  #opts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:500px;width:100%;}
+  .opt{background:var(--panel);border:2px solid var(--border);border-radius:14px;padding:14px 10px;font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;color:var(--text);cursor:pointer;text-align:center;transition:all .2s;}
+  .opt:hover{background:rgba(74,222,128,.1);border-color:var(--green);color:var(--green);}
+  .opt.correct{background:rgba(74,222,128,.2)!important;border-color:var(--green)!important;color:var(--green)!important;animation:pop .4s ease;}
+  .opt.wrong  {background:rgba(248,113,113,.15)!important;border-color:var(--red)!important;color:var(--red)!important;animation:shake .4s ease;}
+  @keyframes pop  {0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+  /* EQUATION DISPLAY */
+  #eq-box{background:rgba(0,0,0,.3);border:2px solid var(--border);border-radius:12px;padding:12px 20px;text-align:center;max-width:500px;width:100%;font-size:13px;font-weight:700;color:#4a7a4a;min-height:42px;line-height:1.6;}
+
+  /* MATRIX SECTION (for matrix questions) */
+  #matrix-display{display:none;max-width:500px;width:100%;background:var(--panel);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;}
+  #matrix-title{font-size:10px;color:#4a7a4a;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;}
+  #matrix-grid{display:inline-grid;gap:6px;margin:0 auto;}
+  .matrix-cell{width:36px;height:36px;border-radius:8px;background:rgba(74,222,128,.15);border:2px solid rgba(74,222,128,.3);display:flex;align-items:center;justify-content:center;font-size:18px;}
+
+  /* TOAST */
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0a1a0a;border:2px solid;border-radius:12px;padding:10px 20px;font-size:13px;font-weight:800;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:90vw;}
+  #toast.show{opacity:1;}
+
+  /* WIN */
+  #win{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px;}
+  #win.show{display:flex;}
+  #win .big{font-size:60px;}
+  #win h2{font-size:26px;font-weight:900;color:var(--green);}
+  #win p{font-size:14px;color:#4a7a4a;font-weight:700;max-width:340px;line-height:1.7;}
+  .win-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px;}
+  .wbtn{padding:12px 22px;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;cursor:pointer;transition:transform .1s;}
+  .wbtn:hover{transform:scale(1.05);}
+  .wbtn-g{background:var(--green);color:#000;}
+  .wbtn-b{background:rgba(255,255,255,.1);color:#fff;border:2px solid rgba(255,255,255,.2);}
+  @keyframes fall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>🐸 Recta Numérica & Matrices</h1>
+  <a href="math-menu.html" class="back-btn">← Matemáticas</a>
+</div>
+
+<div id="score-row">
+  <div class="sc"><span class="sc-label">✅ Correctas</span><span id="sc-ok" style="color:var(--green)">0</span></div>
+  <div class="sc"><span class="sc-label">❌ Errores</span>  <span id="sc-err" style="color:var(--red)">0</span></div>
+  <div class="sc"><span class="sc-label">🎯 Rondas</span>   <span id="sc-left" style="color:var(--gold)">12</span></div>
+</div>
+
+<div id="main">
+  <div id="q-card">
+    <div id="q-label">PREGUNTA</div>
+    <div id="q-text">Cargando...</div>
+    <div id="q-sub"></div>
+  </div>
+
+  <!-- NUMBER LINE -->
+  <div id="numline-wrap">
+    <div id="numline-title">📏 RECTA NUMÉRICA</div>
+    <svg id="numline-svg" viewBox="0 0 560 90" height="90"></svg>
+  </div>
+
+  <!-- MATRIX DISPLAY -->
+  <div id="matrix-display">
+    <div id="matrix-title">🔲 MATRIZ</div>
+    <div id="matrix-grid"></div>
+    <div id="matrix-eq" style="margin-top:10px;font-size:13px;color:#4a7a4a;font-weight:800;"></div>
+  </div>
+
+  <div id="opts"></div>
+
+  <div id="eq-box">Responde la pregunta y verás cómo la rana salta en la recta numérica 🐸</div>
+</div>
+
+<div id="toast"></div>
+<div id="win">
+  <div class="big">🏆🐸🏆</div>
+  <h2 id="win-title">¡Experto en Rectas!</h2>
+  <p id="win-msg">¡Muy bien, Daniel!</p>
+  <div class="win-btns">
+    <button class="wbtn wbtn-g" onclick="startGame()">🔄 Jugar de nuevo</button>
+    <button class="wbtn wbtn-b" onclick="window.location.href='math-menu.html'">← Matemáticas</button>
+  </div>
+</div>
+
+<script>
+// ── QUESTIONS ──────────────────────────────────────────────
+const QUESTIONS = [
+  // RECTA NUMÉRICA — saltos
+  { type:'numline', jumps:3, size:4, q:'Una rana da 4 saltos de 3 en 3. ¿Hasta dónde llega?',       ans:12, opts:[9,12,15,7],  fact:'3+3+3+3 = 4×3 = 12. ¡La rana llegó al 12!' },
+  { type:'numline', jumps:5, size:3, q:'Un sapo da 3 saltos de 5 en 5. ¿Cuál es el resultado?',      ans:15, opts:[10,15,20,12], fact:'5+5+5 = 3×5 = 15. ¡El sapo llegó al 15!' },
+  { type:'numline', jumps:2, size:6, q:'Una atleta da 6 saltos de 2 m cada uno. ¿Cuántos metros?',   ans:12, opts:[8,10,12,14],  fact:'2+2+2+2+2+2 = 6×2 = 12 metros. ¡Excelente salto!' },
+  { type:'numline', jumps:4, size:5, q:'Un canguro salta 5 veces de 4 en 4. ¿Dónde termina?',       ans:20, opts:[16,18,20,24], fact:'4+4+4+4+4 = 5×4 = 20. ¡El canguro llegó al 20!' },
+  { type:'numline', jumps:6, size:3, q:'Una pelota rebota 3 veces de 6 en 6. ¿Hasta dónde llega?',   ans:18, opts:[12,15,18,21], fact:'6+6+6 = 3×6 = 18. ¡La pelota llegó al 18!' },
+  { type:'numline', jumps:7, size:2, q:'Un niño avanza 2 pasos de 7 metros. ¿Cuántos metros total?', ans:14, opts:[9,12,14,16],  fact:'7+7 = 2×7 = 14 metros. ¡Muy bien!' },
+  // MATRICES
+  { type:'matrix', rows:3, cols:4, q:'Una matriz tiene 3 filas y 4 columnas. ¿Cuántos objetos hay en total?', ans:12, opts:[7,10,12,15], fact:'3 filas × 4 columnas = 3×4 = 12 objetos. ¡Así se lee una matriz!' },
+  { type:'matrix', rows:5, cols:2, q:'Hay 5 filas con 2 estrellitas en cada fila. ¿Cuántas estrellitas hay?', ans:10, opts:[7,8,10,12], fact:'5 filas × 2 cols = 5×2 = 10 estrellitas.' },
+  { type:'matrix', rows:4, cols:3, q:'La mamá ató 3 globos a cada silla. Hay 4 sillas. ¿Cuántos globos?',    ans:12, opts:[9,11,12,14], fact:'4 sillas × 3 globos = 4×3 = 12 globos. ¡Así se usa una matriz!' },
+  // PROPIEDAD CONMUTATIVA
+  { type:'commut', a:4, b:3, q:'Propiedad Conmutativa: 4 × 3 = 3 × __', ans:4, opts:[3,4,7,12], fact:'"El orden de los factores NO cambia el resultado." 4×3 = 3×4 = 12. ¡Cambia el orden, pero el resultado es igual!' },
+  { type:'commut', a:5, b:6, q:'Si 5 × 6 = 30, entonces 6 × 5 = __',   ans:30, opts:[11,25,30,36], fact:'¡La propiedad conmutativa dice que 5×6 = 6×5 = 30! El resultado NO cambia.' },
+  { type:'commut', a:3, b:7, q:'¿Cuánto es 3 × 7? ¿Es igual a 7 × 3?',  ans:21, opts:[10,18,21,24], fact:'3×7 = 21 y también 7×3 = 21. ¡La propiedad conmutativa funciona siempre!' },
+];
+
+let pool=[], idx=0, correct=0, wrong=0, answering=true;
+let frogPos=0, frogEl=null;
+
+function startGame(){
+  pool=[...QUESTIONS].sort(()=>Math.random()-.5);
+  idx=0; correct=0; wrong=0; answering=true;
+  document.getElementById('win').classList.remove('show');
+  updateScore(); loadQ();
+}
+
+function loadQ(){
+  if(idx>=pool.length){setTimeout(showWin,400);return;}
+  answering=true;
+  const q=pool[idx];
+  document.getElementById('q-label').textContent = q.type==='numline'?'📏 RECTA NUMÉRICA':q.type==='matrix'?'🔲 MATRICES':'↔️ PROPIEDAD CONMUTATIVA';
+  document.getElementById('q-text').textContent=q.q;
+  document.getElementById('q-sub').textContent='';
+  document.getElementById('eq-box').textContent='Elige la respuesta correcta 👇';
+  document.getElementById('eq-box').style.color='';
+  document.getElementById('sc-left').textContent=pool.length-idx;
+
+  // Show/hide sections
+  document.getElementById('numline-wrap').style.display = q.type==='numline'?'block':'none';
+  document.getElementById('matrix-display').style.display = q.type==='matrix'?'block':'none';
+
+  if(q.type==='numline') drawNumLine(q.jumps, q.size, 0);
+  if(q.type==='matrix')  drawMatrix(q.rows, q.cols, false);
+
+  // Options
+  const grid=document.getElementById('opts');
+  grid.innerHTML='';
+  const shuffled=[...q.opts].sort(()=>Math.random()-.5);
+  shuffled.forEach(opt=>{
+    const btn=document.createElement('button'); btn.className='opt';
+    btn.textContent=opt; btn.dataset.val=opt;
+    btn.addEventListener('click',()=>answer(opt,btn,q));
+    grid.appendChild(btn);
+  });
+}
+
+function answer(chosen,btn,q){
+  if(!answering)return; answering=false;
+  document.querySelectorAll('.opt').forEach(b=>b.disabled=true);
+  if(chosen===q.ans){
+    btn.classList.add('correct'); correct++; updateScore();
+    document.getElementById('eq-box').textContent='✅ '+q.fact;
+    document.getElementById('eq-box').style.color='#4ade80';
+    showToast('✅ ¡Correcto!','#4ade80'); playSound('ok');
+    if(q.type==='numline') animateFrog(q.jumps,q.size);
+    if(q.type==='matrix')  drawMatrix(q.rows,q.cols,true);
+  } else {
+    btn.classList.add('wrong'); wrong++; updateScore();
+    document.querySelectorAll('.opt').forEach(b=>{ if(parseInt(b.dataset.val)===q.ans) b.classList.add('correct'); });
+    document.getElementById('eq-box').textContent='❌ '+q.fact;
+    document.getElementById('eq-box').style.color='#f87171';
+    showToast('❌ ¡Sigue intentando!','#f87171'); playSound('fail');
+  }
+  idx++;
+  setTimeout(loadQ,1900);
+}
+
+// ── NUMBER LINE ────────────────────────────────────────────
+function drawNumLine(jumpSize, jumps, currentJump){
+  const svg=document.getElementById('numline-svg');
+  const max=jumpSize*jumps;
+  const W=560, H=90;
+  const pad=30, lineY=65;
+  const range=max+jumpSize;
+
+  let html='';
+  // Line
+  html+=`<line x1="${pad}" y1="${lineY}" x2="${W-pad}" y2="${lineY}" stroke="#1a3a1a" stroke-width="3"/>`;
+  // Arrow at end
+  html+=`<polygon points="${W-pad},${lineY} ${W-pad-10},${lineY-5} ${W-pad-10},${lineY+5}" fill="#1a3a1a"/>`;
+
+  // Tick marks + numbers
+  for(let n=0;n<=range;n++){
+    const x=pad+(n/range)*(W-pad*2);
+    const isMark = (n % jumpSize===0);
+    const tickH = isMark ? 14 : 8;
+    html+=`<line x1="${x}" y1="${lineY-tickH/2}" x2="${x}" y2="${lineY+tickH/2}" stroke="${isMark?'#2a5a2a':'#162616'}" stroke-width="${isMark?2:1}"/>`;
+    if(isMark) html+=`<text x="${x}" y="${lineY+26}" text-anchor="middle" fill="#2a5a2a" font-size="11" font-family="Nunito" font-weight="800">${n}</text>`;
+  }
+
+  // Jump arcs (only up to currentJump)
+  const colors=['#4ade80','#a3e635','#fbbf24','#38bdf8','#a78bfa','#f472b6','#fb923c'];
+  for(let j=0;j<currentJump;j++){
+    const x1=pad+((j*jumpSize)/range)*(W-pad*2);
+    const x2=pad+(((j+1)*jumpSize)/range)*(W-pad*2);
+    const mx=(x1+x2)/2, my=lineY-30;
+    const col=colors[j%colors.length];
+    html+=`<path d="M${x1},${lineY} Q${mx},${my} ${x2},${lineY}" fill="none" stroke="${col}" stroke-width="2.5" stroke-dasharray="none"/>`;
+    html+=`<polygon points="${x2},${lineY} ${x2-6},${lineY-6} ${x2-6},${lineY+6}" fill="${col}"/>`;
+  }
+
+  // Frog at position
+  const frogX=pad+((currentJump*jumpSize)/range)*(W-pad*2);
+  html+=`<g id="frog-g" transform="translate(${frogX},${lineY-20})">
+    <ellipse cx="0" cy="6" rx="12" ry="9" fill="#16a34a"/>
+    <circle cx="-5" cy="0" r="4" fill="#22c55e"/><circle cx="5" cy="0" r="4" fill="#22c55e"/>
+    <circle cx="-5" cy="0" r="2" fill="#000"/><circle cx="5" cy="0" r="2" fill="#000"/>
+    <ellipse cx="-10" cy="10" rx="4" ry="2.5" fill="#15803d" transform="rotate(-20,-10,10)"/>
+    <ellipse cx="10" cy="10" rx="4" ry="2.5" fill="#15803d" transform="rotate(20,10,10)"/>
+  </g>`;
+
+  svg.innerHTML=html;
+}
+
+function animateFrog(jumpSize, jumps){
+  let j=0;
+  const go=()=>{
+    j++;
+    drawNumLine(jumpSize,jumps,j);
+    const fg=document.getElementById('frog-g');
+    if(fg){fg.classList.add('frog-jump');setTimeout(()=>fg.classList.remove('frog-jump'),500);}
+    if(j<jumps) setTimeout(go,550);
+  };
+  setTimeout(go,200);
+}
+
+// ── MATRIX ────────────────────────────────────────────────
+function drawMatrix(rows,cols,filled){
+  const g=document.getElementById('matrix-grid');
+  g.style.gridTemplateColumns=`repeat(${cols},1fr)`;
+  g.innerHTML='';
+  const emojis=['⭐','🍎','🔵','🟡','🟢','🟠'];
+  const em=emojis[Math.floor(Math.random()*emojis.length)];
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const cell=document.createElement('div'); cell.className='matrix-cell';
+      cell.textContent=filled?em:'';
+      if(filled) cell.style.animation=`pop .3s ease ${(r*cols+c)*0.05}s both`;
+      g.appendChild(cell);
+    }
+  }
+  document.getElementById('matrix-eq').textContent=filled?`${rows} filas × ${cols} columnas = ${rows*cols}`:'';
+}
+
+// ── HELPERS ───────────────────────────────────────────────
+function updateScore(){
+  document.getElementById('sc-ok').textContent=correct;
+  document.getElementById('sc-err').textContent=wrong;
+  document.getElementById('sc-left').textContent=Math.max(0,pool.length-idx);
+}
+
+function showWin(){
+  const perfect=wrong===0;
+  document.getElementById('win-title').textContent=perfect?'¡PERFECTO, DANIEL! ⭐':'¡Campeón de la Recta!';
+  document.getElementById('win-msg').textContent=perfect
+    ?'¡Sin ningún error! Dominas la recta numérica, las matrices y la propiedad conmutativa. ¡Eres un genio! 🧠'
+    :`Tuviste ${wrong} error${wrong!==1?'es':''}. ¡Practica y lo logras perfecto!`;
+  document.getElementById('win').classList.add('show'); confetti();
+}
+
+function confetti(){
+  const cols=['#4ade80','#a3e635','#fbbf24','#38bdf8','#fff'];
+  for(let i=0;i<60;i++){
+    const el=document.createElement('div'); const c=cols[Math.floor(Math.random()*cols.length)];
+    Object.assign(el.style,{position:'fixed',left:Math.random()*100+'vw',top:'-20px',width:(5+Math.random()*8)+'px',height:(5+Math.random()*8)+'px',background:c,borderRadius:Math.random()>.5?'50%':'2px',zIndex:'400',pointerEvents:'none',animation:`fall ${1.5+Math.random()*2}s linear ${Math.random()*1.2}s forwards`});
+    document.body.appendChild(el); setTimeout(()=>el.remove(),4500);
+  }
+}
+
+let toastT;
+function showToast(msg,color){
+  const t=document.getElementById('toast'); t.textContent=msg; t.style.borderColor=color; t.style.color=color;
+  t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1600);
+}
+
+function playSound(type){
+  try{
+    const c=new(window.AudioContext||window.webkitAudioContext)();
+    if(type==='ok'){[[523,0],[659,.1],[784,.2]].forEach(([f,d])=>{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='square';o.frequency.value=f;const t=c.currentTime+d;g.gain.setValueAtTime(.1,t);g.gain.exponentialRampToValueAtTime(.001,t+.18);o.start(t);o.stop(t+.18);});}
+    else{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sawtooth';o.frequency.setValueAtTime(300,c.currentTime);o.frequency.exponentialRampToValueAtTime(80,c.currentTime+.25);g.gain.setValueAtTime(.1,c.currentTime);g.gain.exponentialRampToValueAtValue(.001,c.currentTime+.25);o.start();o.stop(c.currentTime+.25);}
+  }catch(e){}
+}
+
+startGame();
+</script>
+</body>
+</html>

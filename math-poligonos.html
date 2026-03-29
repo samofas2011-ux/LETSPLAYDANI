@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polígonos y Multiplicación 🔷</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+  :root{
+    --bg:#0d0a1a; --panel:#120f28; --border:#1e1a3a;
+    --purple:#a78bfa; --pink:#f472b6; --gold:#fbbf24;
+    --green:#4ade80; --red:#f87171; --blue:#38bdf8; --text:#faf5ff;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 10%,rgba(167,139,250,.07) 0,transparent 70%);pointer-events:none;}
+
+  /* HEADER */
+  #header{background:rgba(10,5,25,.95);border-bottom:3px solid var(--purple);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0;}
+  #header h1{font-size:clamp(13px,2.2vw,18px);font-weight:900;color:var(--purple);text-shadow:0 0 20px rgba(167,139,250,.5);}
+  .back-btn{background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);color:#94a3b8;padding:7px 14px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;text-decoration:none;transition:all .2s;font-family:'Nunito',sans-serif;}
+  .back-btn:hover{background:rgba(255,255,255,.18);color:#fff;}
+
+  /* TABS */
+  #tabs{display:flex;background:var(--panel);border-bottom:2px solid var(--border);}
+  .tab{flex:1;padding:9px 6px;text-align:center;font-weight:900;font-size:11px;cursor:pointer;color:#5a4a8a;border-bottom:3px solid transparent;transition:all .2s;}
+  .tab.active{color:var(--purple);border-bottom-color:var(--purple);}
+
+  /* SCORE */
+  #score-row{background:var(--panel);border-bottom:2px solid var(--border);padding:6px 20px;display:flex;justify-content:center;gap:24px;font-size:13px;font-weight:900;flex-wrap:wrap;}
+  .sc{display:flex;flex-direction:column;align-items:center;gap:1px;}
+  .sc-label{font-size:8px;color:#5a4a8a;letter-spacing:2px;text-transform:uppercase;}
+
+  /* MAIN */
+  #main{flex:1;display:flex;flex-direction:column;align-items:center;padding:16px;gap:14px;overflow-y:auto;}
+
+  /* POLYGON DISPLAY */
+  #poly-area{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;max-width:560px;width:100%;}
+  .poly-card{background:var(--panel);border:3px solid var(--border);border-radius:16px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:120px;transition:all .3s;}
+  .poly-card.highlight{border-color:var(--purple);box-shadow:0 0 20px rgba(167,139,250,.3);}
+  .poly-svg{width:80px;height:80px;}
+  .poly-name{font-size:13px;font-weight:900;color:var(--purple);}
+  .poly-sides{font-size:11px;color:#5a4a8a;font-weight:700;}
+
+  /* Q CARD */
+  #q-card{background:var(--panel);border:3px solid var(--border);border-radius:16px;padding:14px 20px;text-align:center;max-width:540px;width:100%;}
+  #q-label{font-size:9px;color:#5a4a8a;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+  #q-text{font-size:clamp(14px,2.8vw,20px);font-weight:900;color:var(--text);line-height:1.5;}
+
+  /* OPTIONS */
+  #opts{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;max-width:500px;width:100%;}
+  .opt{background:var(--panel);border:2px solid var(--border);border-radius:12px;padding:12px 8px;font-family:'Nunito',sans-serif;font-weight:900;font-size:13px;color:var(--text);cursor:pointer;text-align:center;transition:all .2s;line-height:1.4;}
+  .opt:hover{background:rgba(167,139,250,.1);border-color:var(--purple);color:var(--purple);}
+  .opt.correct{background:rgba(74,222,128,.2)!important;border-color:var(--green)!important;color:var(--green)!important;animation:pop .4s ease;}
+  .opt.wrong  {background:rgba(248,113,113,.15)!important;border-color:var(--red)!important;color:var(--red)!important;animation:shake .4s ease;}
+  @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.07)}100%{transform:scale(1)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+  /* FACT */
+  #fact-box{background:var(--panel);border:2px solid var(--border);border-radius:12px;padding:11px 16px;max-width:500px;width:100%;font-size:13px;font-weight:700;color:#5a4a8a;text-align:center;min-height:42px;line-height:1.5;}
+
+  /* TOAST */
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg);border:2px solid;border-radius:12px;padding:10px 20px;font-size:13px;font-weight:800;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:90vw;}
+  #toast.show{opacity:1;}
+
+  /* WIN */
+  #win{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px;}
+  #win.show{display:flex;}
+  #win .big{font-size:60px;}
+  #win h2{font-size:26px;font-weight:900;color:var(--purple);}
+  #win p{font-size:14px;color:#5a4a8a;font-weight:700;max-width:340px;line-height:1.7;}
+  .win-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px;}
+  .wbtn{padding:12px 22px;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;cursor:pointer;transition:transform .1s;}
+  .wbtn:hover{transform:scale(1.05);}
+  .wbtn-p{background:var(--purple);color:#000;}
+  .wbtn-b{background:rgba(255,255,255,.1);color:#fff;border:2px solid rgba(255,255,255,.2);}
+  @keyframes fall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>🔷 Polígonos, Suma y Multiplicación</h1>
+  <a href="math-menu.html" class="back-btn">← Matemáticas</a>
+</div>
+
+<div id="tabs">
+  <div class="tab active" onclick="setMode(0)">🔷 Conoce los Polígonos</div>
+  <div class="tab"        onclick="setMode(1)">➕ Suma Repetida</div>
+  <div class="tab"        onclick="setMode(2)">✖️ Multiplica con Polígonos</div>
+</div>
+
+<div id="score-row">
+  <div class="sc"><span class="sc-label">✅ Correctas</span><span id="sc-ok" style="color:var(--green)">0</span></div>
+  <div class="sc"><span class="sc-label">❌ Errores</span>  <span id="sc-err" style="color:var(--red)">0</span></div>
+  <div class="sc"><span class="sc-label">🎯 Restantes</span><span id="sc-left" style="color:var(--gold)">-</span></div>
+</div>
+
+<div id="main">
+
+  <!-- POLYGON REFERENCE (mode 0 only) -->
+  <div id="poly-area" style="display:none;"></div>
+
+  <div id="q-card">
+    <div id="q-label">PREGUNTA</div>
+    <div id="q-text">Cargando...</div>
+  </div>
+
+  <div id="opts"></div>
+  <div id="fact-box">¡Selecciona la respuesta correcta! 🔷</div>
+</div>
+
+<div id="toast"></div>
+<div id="win">
+  <div class="big">🏆🔷🏆</div>
+  <h2 id="win-title">¡Maestro de Polígonos!</h2>
+  <p id="win-msg">¡Increíble, Daniel!</p>
+  <div class="win-btns">
+    <button class="wbtn wbtn-p" onclick="startGame()">🔄 Jugar de nuevo</button>
+    <button class="wbtn wbtn-b" onclick="window.location.href='math-menu.html'">← Matemáticas</button>
+  </div>
+</div>
+
+<script>
+// ── POLYGON DATA ──────────────────────────────────────────
+const POLYGONS = [
+  { name:'Triángulo',   sides:3, color:'#f472b6', pts:[[40,10],[70,65],[10,65]] },
+  { name:'Cuadrilátero',sides:4, color:'#38bdf8', pts:[[10,10],[70,10],[70,70],[10,70]] },
+  { name:'Pentágono',   sides:5, color:'#fbbf24', pts:[[40,5],[75,30],[62,72],[18,72],[5,30]] },
+  { name:'Hexágono',    sides:6, color:'#4ade80', pts:[[40,5],[72,22],[72,58],[40,75],[8,58],[8,22]] },
+  { name:'Heptágono',   sides:7, color:'#a78bfa', pts:[[40,5],[67,17],[76,46],[60,70],[20,70],[4,46],[13,17]] },
+  { name:'Octágono',    sides:8, color:'#fb923c', pts:[[25,5],[55,5],[75,25],[75,55],[55,75],[25,75],[5,55],[5,25]] },
+];
+
+// Build reference grid SVGs
+function buildPolyRef(){
+  const area=document.getElementById('poly-area');
+  area.innerHTML='';
+  POLYGONS.forEach(p=>{
+    const card=document.createElement('div'); card.className='poly-card';
+    const svgPts=p.pts.map(([x,y])=>`${x},${y}`).join(' ');
+    card.innerHTML=`
+      <svg class="poly-svg" viewBox="0 0 80 80">
+        <polygon points="${svgPts}" fill="${p.color}22" stroke="${p.color}" stroke-width="3" stroke-linejoin="round"/>
+        ${p.pts.map(([x,y])=>`<circle cx="${x}" cy="${y}" r="3" fill="${p.color}"/>`).join('')}
+      </svg>
+      <div class="poly-name">${p.name}</div>
+      <div class="poly-sides">${p.sides} lados</div>`;
+    area.appendChild(card);
+  });
+}
+
+// ── QUESTION BANKS ────────────────────────────────────────
+const BANKS = [
+  // MODE 0: Know your polygons
+  [
+    { q:'¿Cuántos lados tiene un TRIÁNGULO?',     ans:3,  opts:[3,4,5,6],   fact:'El TRIÁNGULO tiene 3 lados. "Tri" significa 3. ¡Como un trozo de pizza!'},
+    { q:'¿Cuántos lados tiene un CUADRILÁTERO?',  ans:4,  opts:[3,4,5,8],   fact:'El CUADRILÁTERO tiene 4 lados. "Cuadri" significa 4. ¡Como una hoja de papel!'},
+    { q:'¿Cuántos lados tiene un PENTÁGONO?',     ans:5,  opts:[4,5,6,7],   fact:'El PENTÁGONO tiene 5 lados. "Penta" significa 5. ¡Como la señal de STOP!'},
+    { q:'¿Cuántos lados tiene un HEXÁGONO?',      ans:6,  opts:[5,6,7,8],   fact:'El HEXÁGONO tiene 6 lados. "Hexa" significa 6. ¡Como las celdas de un panal de abejas!'},
+    { q:'Una figura con 8 lados se llama...',      ans:'Octágono', opts:['Hexágono','Heptágono','Octágono','Nonágono'], fact:'Un OCTÁGONO tiene 8 lados. "Octa" significa 8. ¡Como una señal de STOP!'},
+    { q:'¿Qué es un POLÍGONO?',                   ans:'Figura cerrada con líneas rectas', opts:['Figura redonda','Figura cerrada con líneas rectas','Un tipo de número','Un animal'], fact:'Un POLÍGONO es una figura cerrada formada por líneas rectas llamadas LADOS. Los ángulos se llaman VÉRTICES.'},
+  ],
+  // MODE 1: Suma repetida
+  [
+    { q:'Hay 3 triángulos. ¿Cuántos lados hay en total? Escríbelo como suma.', ans:'3+3+3=9', opts:['3+3+3=9','3×3=6','3+3=6','3×3=9'], fact:'¡3 triángulos = 3+3+3 = 9 lados! Sumar la misma cantidad varias veces.'},
+    { q:'Hay 4 cuadriláteros. ¿Cuántos lados en total?',                       ans:16,        opts:[12,14,16,18], fact:'4 cuadriláteros × 4 lados = 4+4+4+4 = 16 lados.'},
+    { q:'2 pentágonos juntos tienen cuántos lados en total?',                   ans:10,        opts:[7,8,10,12],   fact:'2 pentágonos: 5+5 = 10 lados. ¡O también 2×5 = 10!'},
+    { q:'Hay 3 hexágonos. ¿Cuántos lados hay?',                                ans:18,        opts:[12,15,18,21], fact:'3 hexágonos: 6+6+6 = 18 lados. ¡O 3×6 = 18!'},
+    { q:'5 triángulos juntos tienen...?',                                       ans:15,        opts:[10,12,15,20], fact:'5 triángulos: 3+3+3+3+3 = 15 lados. ¡O 5×3 = 15!'},
+    { q:'¿Cuál SUMA expresa 4 grupos de 5?',                                   ans:'5+5+5+5', opts:['4+4+4+4+4','5+5+5+5','4+5','5×4'], fact:'4 grupos de 5 = 5+5+5+5 = 20. Sumar el mismo número 4 veces.'},
+  ],
+  // MODE 2: Multiplica con polígonos
+  [
+    { q:'Tengo 6 triángulos. La multiplicación de lados es: 6 × 3 = __',       ans:18,  opts:[12,15,18,21], fact:'6 triángulos × 3 lados = 6×3 = 18 lados. ¡La multiplicación es sumar rápido!'},
+    { q:'5 hexágonos tienen en total: 5 × 6 = __',                             ans:30,  opts:[24,28,30,36], fact:'5 hexágonos × 6 lados = 5×6 = 30 lados.'},
+    { q:'Si 3 × 4 = 12, ¿cuántos lados tienen 3 cuadriláteros?',               ans:12,  opts:[9,10,12,16],  fact:'3 cuadriláteros × 4 lados = 3×4 = 12 lados.'},
+    { q:'4 pentágonos: 4 × 5 = __',                                            ans:20,  opts:[16,18,20,25], fact:'4 pentágonos × 5 lados = 4×5 = 20 lados.'},
+    { q:'Hay 7 triángulos. ¿Cuántos lados en total? 7 × __ = 21',              ans:3,   opts:[2,3,4,5],     fact:'7 triángulos × 3 lados = 21 lados. El factor que falta es 3 (los lados del triángulo).'},
+    { q:'¿Cuántos hexágonos necesito para tener 24 lados en total? __ × 6 = 24',ans:4,  opts:[3,4,5,6],    fact:'4 × 6 = 24. Necesito 4 hexágonos para tener 24 lados.'},
+  ],
+];
+
+let mode=0, pool=[], idx=0, correct=0, wrong=0, answering=true;
+
+function setMode(m){
+  mode=m;
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===m));
+  startGame();
+}
+
+function startGame(){
+  pool=[...BANKS[mode]].sort(()=>Math.random()-.5);
+  idx=0; correct=0; wrong=0; answering=true;
+  document.getElementById('win').classList.remove('show');
+  document.getElementById('poly-area').style.display = mode===0?'flex':'none';
+  if(mode===0) buildPolyRef();
+  updateScore(); loadQ();
+}
+
+function loadQ(){
+  if(idx>=pool.length){setTimeout(showWin,400);return;}
+  answering=true;
+  const q=pool[idx];
+  document.getElementById('q-label').textContent = ['🔷 ¿Cuántos lados tiene?','➕ Suma repetida','✖️ Multiplicación con polígonos'][mode];
+  document.getElementById('q-text').textContent=q.q;
+  document.getElementById('fact-box').textContent='¡Selecciona la respuesta correcta! 🔷';
+  document.getElementById('fact-box').style.color='';
+  document.getElementById('sc-left').textContent=pool.length-idx;
+
+  const grid=document.getElementById('opts');
+  grid.innerHTML='';
+  const shuffled=[...q.opts].sort(()=>Math.random()-.5);
+  shuffled.forEach(opt=>{
+    const btn=document.createElement('button'); btn.className='opt';
+    btn.textContent=opt; btn.dataset.val=String(opt);
+    btn.addEventListener('click',()=>answer(opt,btn,q));
+    grid.appendChild(btn);
+  });
+}
+
+function answer(chosen,btn,q){
+  if(!answering)return; answering=false;
+  document.querySelectorAll('.opt').forEach(b=>b.disabled=true);
+  const correct_ans=String(q.ans);
+  if(String(chosen)===correct_ans){
+    btn.classList.add('correct'); correct++; updateScore();
+    document.getElementById('fact-box').textContent='✅ '+q.fact;
+    document.getElementById('fact-box').style.color='#4ade80';
+    showToast('✅ ¡Correcto!','#4ade80'); playSound('ok');
+    // Highlight the polygon if related
+    highlightPoly(q);
+  } else {
+    btn.classList.add('wrong'); wrong++; updateScore();
+    document.querySelectorAll('.opt').forEach(b=>{ if(String(b.dataset.val)===correct_ans) b.classList.add('correct'); });
+    document.getElementById('fact-box').textContent='❌ '+q.fact;
+    document.getElementById('fact-box').style.color='#f87171';
+    showToast('❌ ¡Inténtalo!','#f87171'); playSound('fail');
+  }
+  idx++;
+  setTimeout(loadQ,1900);
+}
+
+function highlightPoly(q){
+  // briefly highlight relevant polygon cards
+  const polyArea=document.getElementById('poly-area');
+  if(polyArea.style.display==='flex'){
+    const cards=polyArea.querySelectorAll('.poly-card');
+    cards.forEach(c=>{ c.classList.remove('highlight'); });
+    const txt=q.q.toLowerCase();
+    cards.forEach(c=>{
+      const name=c.querySelector('.poly-name').textContent.toLowerCase();
+      if(txt.includes(name)) { c.classList.add('highlight'); setTimeout(()=>c.classList.remove('highlight'),2000); }
+    });
+  }
+}
+
+function updateScore(){
+  document.getElementById('sc-ok').textContent=correct;
+  document.getElementById('sc-err').textContent=wrong;
+  document.getElementById('sc-left').textContent=Math.max(0,pool.length-idx);
+}
+
+function showWin(){
+  const perfect=wrong===0;
+  document.getElementById('win-title').textContent=perfect?'¡PERFECTO, DANIEL! ⭐':'¡Maestro de Polígonos!';
+  document.getElementById('win-msg').textContent=perfect
+    ?'¡Sin ningún error! Ya dominas los polígonos, la suma repetida y la multiplicación. ¡Eres brillante! 🔷'
+    :`Tuviste ${wrong} error${wrong!==1?'es':''}. ¡Practica las otras secciones también!`;
+  document.getElementById('win').classList.add('show'); confetti();
+}
+
+function confetti(){
+  const cols=['#a78bfa','#f472b6','#fbbf24','#4ade80','#38bdf8'];
+  for(let i=0;i<60;i++){
+    const el=document.createElement('div'); const c=cols[Math.floor(Math.random()*cols.length)];
+    Object.assign(el.style,{position:'fixed',left:Math.random()*100+'vw',top:'-20px',width:(5+Math.random()*8)+'px',height:(5+Math.random()*8)+'px',background:c,borderRadius:Math.random()>.5?'50%':'2px',zIndex:'400',pointerEvents:'none',animation:`fall ${1.5+Math.random()*2}s linear ${Math.random()*1.2}s forwards`});
+    document.body.appendChild(el); setTimeout(()=>el.remove(),4500);
+  }
+}
+
+let toastT;
+function showToast(msg,color){
+  const t=document.getElementById('toast'); t.textContent=msg; t.style.borderColor=color; t.style.color=color;
+  t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1500);
+}
+
+function playSound(type){
+  try{
+    const c=new(window.AudioContext||window.webkitAudioContext)();
+    if(type==='ok'){[[523,0],[659,.1],[784,.2]].forEach(([f,d])=>{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='square';o.frequency.value=f;const t=c.currentTime+d;g.gain.setValueAtTime(.1,t);g.gain.exponentialRampToValueAtTime(.001,t+.18);o.start(t);o.stop(t+.18);});}
+    else{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sawtooth';o.frequency.setValueAtTime(300,c.currentTime);o.frequency.exponentialRampToValueAtTime(80,c.currentTime+.25);g.gain.setValueAtTime(.1,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.25);o.start();o.stop(c.currentTime+.25);}
+  }catch(e){}
+}
+
+startGame();
+</script>
+</body>
+</html>
