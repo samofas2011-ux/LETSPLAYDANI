@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Puntos Cardinales 🧭</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+  :root{--bg:#0a1a0a;--panel:#0f2010;--border:#1a3a1a;--green:#4ade80;--lime:#a3e635;--gold:#fbbf24;--red:#f87171;--text:#f0fff0;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;display:flex;flex-direction:column;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 30%,rgba(74,222,128,.07) 0,transparent 70%);pointer-events:none;}
+
+  #header{background:rgba(0,15,0,.9);border-bottom:3px solid var(--green);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0;}
+  #header h1{font-size:clamp(14px,2.5vw,20px);font-weight:900;color:var(--green);text-shadow:0 0 20px rgba(74,222,128,.5);}
+  .back-btn{background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);color:#94a3b8;padding:7px 14px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;text-decoration:none;transition:all .2s;font-family:'Nunito',sans-serif;}
+  .back-btn:hover{background:rgba(255,255,255,.18);color:#fff;}
+
+  #score-row{background:var(--panel);border-bottom:2px solid var(--border);padding:8px 20px;display:flex;justify-content:center;gap:32px;font-size:13px;font-weight:900;}
+  .sc{display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .sc-label{font-size:8px;color:#4a7a4a;letter-spacing:2px;text-transform:uppercase;}
+  #s-correct{color:var(--green);}#s-wrong{color:var(--red);}#s-left{color:var(--gold);}
+
+  #game-content{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:16px;}
+
+  /* QUESTION */
+  #question-box{background:var(--panel);border:3px solid var(--border);border-radius:16px;padding:16px 24px;text-align:center;max-width:480px;width:100%;}
+  #q-label{font-size:9px;color:#4a7a4a;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+  #q-text{font-size:clamp(14px,3vw,22px);font-weight:900;color:var(--text);line-height:1.4;}
+  #q-sub{font-size:11px;color:#4a7a4a;margin-top:6px;}
+
+  /* COMPASS */
+  #compass-area{position:relative;width:min(340px,90vw);height:min(340px,90vw);}
+  #compass-svg{width:100%;height:100%;}
+
+  /* Direction buttons around compass */
+  .dir-btn{
+    position:absolute;width:58px;height:58px;border-radius:50%;
+    border:3px solid var(--border);background:var(--panel);
+    font-weight:900;font-size:15px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .2s;color:var(--text);
+    transform:translate(-50%,-50%);
+    font-family:'Nunito',sans-serif;
+  }
+  .dir-btn:hover{background:rgba(74,222,128,.15);border-color:var(--green);color:var(--green);transform:translate(-50%,-50%) scale(1.1);}
+  .dir-btn:active{transform:translate(-50%,-50%) scale(.95);}
+  .dir-btn.correct{background:rgba(74,222,128,.25)!important;border-color:var(--green)!important;color:var(--green)!important;animation:btnPop .4s ease;}
+  .dir-btn.wrong  {background:rgba(248,113,113,.2)!important;border-color:var(--red)!important;  color:var(--red)!important;  animation:btnShake .4s ease;}
+  @keyframes btnPop  {0%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.2)}100%{transform:translate(-50%,-50%) scale(1)}}
+  @keyframes btnShake{0%,100%{transform:translate(-50%,-50%) translateX(0)}25%{transform:translate(-50%,-50%) translateX(-5px)}75%{transform:translate(-50%,-50%) translateX(5px)}}
+
+  /* FACT BOX */
+  #fact-box{background:var(--panel);border:2px solid var(--border);border-radius:12px;padding:12px 18px;max-width:440px;width:100%;font-size:13px;font-weight:700;color:#6a9a6a;text-align:center;min-height:44px;}
+
+  /* TOAST */
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0a1a0a;border:2px solid;border-radius:12px;padding:10px 20px;font-size:13px;font-weight:800;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:90vw;}
+  #toast.show{opacity:1;}
+
+  /* WIN */
+  #win{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px;}
+  #win.show{display:flex;}
+  #win .big{font-size:60px;}
+  #win h2{font-size:28px;font-weight:900;color:var(--green);}
+  #win p{font-size:14px;color:#6a9a6a;font-weight:700;max-width:340px;line-height:1.7;}
+  .win-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px;}
+  .wbtn{padding:12px 22px;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;cursor:pointer;transition:transform .1s;}
+  .wbtn:hover{transform:scale(1.05);}
+  .wbtn-green{background:var(--green);color:#000;}
+  .wbtn-back{background:rgba(255,255,255,.1);color:#fff;border:2px solid rgba(255,255,255,.2);}
+  @keyframes fall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>🧭 Puntos Cardinales y Rosa de los Vientos</h1>
+  <a href="geo-menu.html" class="back-btn">← Geografía</a>
+</div>
+
+<div id="score-row">
+  <div class="sc"><span class="sc-label">✅ Correctas</span><span id="s-correct">0</span></div>
+  <div class="sc"><span class="sc-label">❌ Errores</span><span id="s-wrong">0</span></div>
+  <div class="sc"><span class="sc-label">🎯 Rondas</span><span id="s-left">10</span></div>
+</div>
+
+<div id="game-content">
+
+  <div id="question-box">
+    <div id="q-label">¿DÓNDE ESTÁ?</div>
+    <div id="q-text">Cargando...</div>
+    <div id="q-sub">Toca la dirección correcta en la brújula</div>
+  </div>
+
+  <div id="compass-area">
+    <!-- Compass SVG -->
+    <svg id="compass-svg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+      <!-- Outer ring -->
+      <circle cx="150" cy="150" r="140" fill="#0a1a0a" stroke="#1a3a1a" stroke-width="3"/>
+      <circle cx="150" cy="150" r="120" fill="none" stroke="#1a3a1a" stroke-width="1" stroke-dasharray="8,6"/>
+      <!-- Star points (decorative) -->
+      <g opacity="0.3">
+        <line x1="150" y1="30" x2="150" y2="270" stroke="#2a5a2a" stroke-width="1"/>
+        <line x1="30" y1="150" x2="270" y2="150" stroke="#2a5a2a" stroke-width="1"/>
+        <line x1="62" y1="62" x2="238" y2="238" stroke="#2a5a2a" stroke-width="1"/>
+        <line x1="238" y1="62" x2="62" y2="238" stroke="#2a5a2a" stroke-width="1"/>
+      </g>
+      <!-- Main 4 arrows -->
+      <polygon points="150,40 143,120 150,108 157,120" fill="#4ade80" opacity="0.8"/>
+      <polygon points="150,260 143,180 150,192 157,180" fill="#4ade80" opacity="0.4"/>
+      <polygon points="40,150 120,143 108,150 120,157" fill="#4ade80" opacity="0.4"/>
+      <polygon points="260,150 180,143 192,150 180,157" fill="#4ade80" opacity="0.4"/>
+      <!-- Center -->
+      <circle cx="150" cy="150" r="18" fill="#0f2010" stroke="#2a5a2a" stroke-width="2"/>
+      <circle cx="150" cy="150" r="8" fill="#4ade80" opacity="0.6"/>
+      <!-- Diagonal small arrows -->
+      <polygon points="78,78 115,115 108,102 121,108" fill="#2a5a2a" opacity="0.5"/>
+      <polygon points="222,78 185,115 192,102 179,108" fill="#2a5a2a" opacity="0.5"/>
+      <polygon points="78,222 115,185 102,192 108,179" fill="#2a5a2a" opacity="0.5"/>
+      <polygon points="222,222 185,185 192,192 179,179" fill="#2a5a2a" opacity="0.5"/>
+    </svg>
+
+    <!-- Direction buttons — positioned around compass -->
+    <!-- N -->  <button class="dir-btn" id="btn-N"  style="left:50%;top:8%;"   data-dir="N" >N</button>
+    <!-- NE --> <button class="dir-btn" id="btn-NE" style="left:82%;top:18%;"  data-dir="NE">NE</button>
+    <!-- E -->  <button class="dir-btn" id="btn-E"  style="left:96%;top:50%;"  data-dir="E" >E</button>
+    <!-- SE --> <button class="dir-btn" id="btn-SE" style="left:82%;top:82%;"  data-dir="SE">SE</button>
+    <!-- S -->  <button class="dir-btn" id="btn-S"  style="left:50%;top:95%;"  data-dir="S" >S</button>
+    <!-- SO --> <button class="dir-btn" id="btn-SO" style="left:18%;top:82%;"  data-dir="SO">SO</button>
+    <!-- O -->  <button class="dir-btn" id="btn-O"  style="left:4%;top:50%;"   data-dir="O" >O</button>
+    <!-- NO --> <button class="dir-btn" id="btn-NO" style="left:18%;top:18%;"  data-dir="NO">NO</button>
+  </div>
+
+  <div id="fact-box">Toca la dirección correcta en la brújula 🧭</div>
+</div>
+
+<div id="toast"></div>
+
+<div id="win">
+  <div class="big">🏆🧭🏆</div>
+  <h2 id="win-title">¡Brújula Dominada!</h2>
+  <p id="win-msg">¡Excelente, Daniel! Ya conoces todos los puntos cardinales. ¡Nunca te perderás! 🌍</p>
+  <div class="win-btns">
+    <button class="wbtn wbtn-green" onclick="startGame()">🔄 Jugar de nuevo</button>
+    <button class="wbtn wbtn-back"  onclick="window.location.href='geo-menu.html'">← Geografía</button>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+  // 8 cardinal + intercardinal directions
+  { q:'¿Hacia dónde señala el NORTE?',            ans:'N',  fact:'El NORTE (N) es hacia arriba en el mapa. ¡Siempre apunta al Polo Norte!'},
+  { q:'¿Dónde está el SUR?',                       ans:'S',  fact:'El SUR (S) es hacia abajo. Apunta al Polo Sur de la Tierra.'},
+  { q:'¿Hacia dónde sale el SOL? → ESTE u ORIENTE',ans:'E',  fact:'El SOL sale por el ESTE (E) u Oriente cada mañana. ¡Por eso también se llama Oriente!'},
+  { q:'¿Dónde se OCULTA el sol? → OESTE u OCCIDENTE',ans:'O',fact:'El sol se oculta por el OESTE (O). ¡Por eso se llama Occidente u Occidente!'},
+  { q:'¿Qué punto queda entre el NORTE y el ESTE?',ans:'NE', fact:'El NORESTE (NE) queda entre el Norte y el Este. ¡Es un punto intercardinal!'},
+  { q:'¿Qué punto queda entre el NORTE y el OESTE?',ans:'NO',fact:'El NOROESTE (NO) queda entre el Norte y el Oeste.'},
+  { q:'¿Qué punto queda entre el SUR y el ESTE?',  ans:'SE', fact:'El SURESTE (SE) queda entre el Sur y el Este.'},
+  { q:'¿Qué punto queda entre el SUR y el OESTE?', ans:'SO', fact:'El SUROESTE (SO) queda entre el Sur y el Oeste.'},
+  { q:'En Costa Rica, ¿hacia dónde queda el Mar Caribe?', ans:'E', fact:'¡El Mar Caribe queda al ESTE de Costa Rica! Por eso Limón está al oriente.'},
+  { q:'En Costa Rica, ¿hacia dónde queda el Océano Pacífico?', ans:'O', fact:'¡El Océano Pacífico queda al OESTE de Costa Rica! Por eso se llama "Pacífico".'},
+];
+
+let pool=[], idx=0, correct=0, wrong=0, answering=true;
+
+function buildPool(){
+  pool=[...QUESTIONS].sort(()=>Math.random()-.5);
+  idx=0; correct=0; wrong=0; answering=true;
+  updateScore();
+  // reset buttons
+  document.querySelectorAll('.dir-btn').forEach(b=>{ b.classList.remove('correct','wrong'); b.disabled=false; });
+}
+
+function loadQuestion(){
+  if(idx>=pool.length){ setTimeout(showWin,400); return; }
+  const q=pool[idx];
+  document.getElementById('q-text').textContent=q.q;
+  document.getElementById('s-left').textContent=pool.length-idx;
+  document.getElementById('fact-box').textContent='Toca la dirección correcta en la brújula 🧭';
+  document.querySelectorAll('.dir-btn').forEach(b=>{ b.classList.remove('correct','wrong'); b.disabled=false; });
+  answering=true;
+}
+
+function answer(dir) {
+  if(!answering) return;
+  answering=false;
+  const q=pool[idx];
+  const btn=document.getElementById(`btn-${dir}`);
+  if(dir===q.ans){
+    btn.classList.add('correct');
+    correct++; updateScore();
+    document.getElementById('fact-box').textContent='✅ '+q.fact;
+    document.getElementById('fact-box').style.color='#4ade80';
+    showToast('✅ ¡Correcto!','#4ade80');
+    playSound('ok');
+  } else {
+    btn.classList.add('wrong');
+    wrong++; updateScore();
+    document.getElementById('fact-box').textContent='❌ La respuesta correcta era: '+q.ans+'. '+q.fact;
+    document.getElementById('fact-box').style.color='#f87171';
+    showToast('❌ ¡Inténtalo de nuevo!','#f87171');
+    playSound('fail');
+    // Show correct after brief delay
+    setTimeout(()=>{ document.getElementById(`btn-${q.ans}`).classList.add('correct'); }, 500);
+  }
+  idx++;
+  setTimeout(()=>{ document.getElementById('fact-box').style.color=''; loadQuestion(); }, 1600);
+}
+
+function updateScore(){
+  document.getElementById('s-correct').textContent=correct;
+  document.getElementById('s-wrong').textContent=wrong;
+  document.getElementById('s-left').textContent=Math.max(0,pool.length-idx);
+}
+
+function showWin(){
+  const perfect=wrong===0;
+  document.getElementById('win-title').textContent = perfect?'¡PERFECTO, DANIEL! 🌟':'¡Brújula Dominada!';
+  document.getElementById('win-msg').textContent   = perfect
+    ? '¡Sin ningún error! Eres un experto en puntos cardinales. ¡Nunca te perderás! 🧭'
+    : `Tuviste ${wrong} error${wrong!==1?'es':''}. ¡Practica y lo logras perfecto!`;
+  document.getElementById('win').classList.add('show');
+  confetti();
+}
+
+function startGame(){
+  document.getElementById('win').classList.remove('show');
+  buildPool(); loadQuestion();
+}
+
+function confetti(){
+  const cols=['#4ade80','#a3e635','#fbbf24','#fff'];
+  for(let i=0;i<60;i++){
+    const el=document.createElement('div'); const c=cols[Math.floor(Math.random()*cols.length)];
+    Object.assign(el.style,{position:'fixed',left:Math.random()*100+'vw',top:'-20px',width:(5+Math.random()*8)+'px',height:(5+Math.random()*8)+'px',background:c,borderRadius:Math.random()>.5?'50%':'2px',zIndex:'400',pointerEvents:'none',animation:`fall ${1.5+Math.random()*2}s linear ${Math.random()*1.2}s forwards`});
+    document.body.appendChild(el); setTimeout(()=>el.remove(),4500);
+  }
+}
+
+let toastT;
+function showToast(msg,color){
+  const t=document.getElementById('toast'); t.textContent=msg; t.style.borderColor=color; t.style.color=color;
+  t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1500);
+}
+
+function playSound(type){
+  try{
+    const c=new(window.AudioContext||window.webkitAudioContext)();
+    if(type==='ok'){
+      [[523,0],[659,.1],[784,.2]].forEach(([f,d])=>{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='square';o.frequency.value=f;const t=c.currentTime+d;g.gain.setValueAtTime(.1,t);g.gain.exponentialRampToValueAtTime(.001,t+.18);o.start(t);o.stop(t+.18);});
+    } else {
+      const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sawtooth';o.frequency.setValueAtTime(300,c.currentTime);o.frequency.exponentialRampToValueAtTime(80,c.currentTime+.25);g.gain.setValueAtTime(.1,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.25);o.start();o.stop(c.currentTime+.25);
+    }
+  }catch(e){}
+}
+
+// Wire buttons
+document.querySelectorAll('.dir-btn').forEach(b=>{ b.addEventListener('click',()=>answer(b.dataset.dir)); });
+
+startGame();
+</script>
+</body>
+</html>

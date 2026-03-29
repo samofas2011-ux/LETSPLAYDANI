@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elementos del Mapa 🗺️</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+  :root {
+    --bg:#0a1628; --panel:#111e35; --border:#1e3a5f;
+    --gold:#fbbf24; --cyan:#22d3ee; --green:#4ade80;
+    --red:#f87171; --text:#f0f9ff;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 30% 20%,rgba(34,211,238,.07) 0,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(251,191,36,.05) 0,transparent 60%);pointer-events:none;}
+
+  /* HEADER */
+  #header{background:rgba(0,10,30,.9);border-bottom:3px solid var(--cyan);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;position:relative;z-index:10;}
+  #header h1{font-size:clamp(14px,2.5vw,20px);font-weight:900;color:var(--cyan);text-shadow:0 0 20px rgba(34,211,238,.5);}
+  .back-btn{background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);color:#94a3b8;padding:7px 14px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;text-decoration:none;transition:all .2s;font-family:'Nunito',sans-serif;}
+  .back-btn:hover{background:rgba(255,255,255,.18);color:#fff;}
+
+  /* PROGRESS */
+  #prog-bar{background:var(--panel);border-bottom:2px solid var(--border);padding:8px 20px;display:flex;align-items:center;gap:12px;}
+  #prog-track{flex:1;height:12px;background:var(--border);border-radius:6px;overflow:hidden;}
+  #prog-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--gold));border-radius:6px;width:0%;transition:width .5s;}
+  #prog-label{font-size:12px;font-weight:900;color:var(--gold);white-space:nowrap;}
+
+  /* INSTRUCTIONS */
+  #instr{text-align:center;padding:10px 20px;font-size:12px;font-weight:700;color:#64748b;}
+
+  /* LABELS TRAY */
+  #labels-tray{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;padding:12px 20px;background:rgba(0,0,0,.3);border-bottom:2px solid var(--border);}
+  .label-chip{
+    padding:9px 16px;border-radius:100px;font-weight:900;font-size:13px;
+    cursor:grab;user-select:none;border:2px solid;
+    transition:transform .15s,box-shadow .15s,opacity .3s;
+    background:var(--panel);
+  }
+  .label-chip:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 6px 20px rgba(0,0,0,.4);}
+  .label-chip:active{cursor:grabbing;transform:scale(.95);}
+  .label-chip.placed{opacity:.3;pointer-events:none;}
+  .label-chip.dragging{opacity:.3;}
+
+  /* MAP AREA */
+  #map-area{display:flex;align-items:center;justify-content:center;padding:20px;flex:1;position:relative;}
+  #map-container{position:relative;width:min(600px,95vw);}
+  #map-svg{width:100%;height:auto;display:block;border-radius:12px;}
+
+  /* DROP ZONES on map */
+  .dz{
+    position:absolute;border:3px dashed rgba(34,211,238,.4);border-radius:8px;
+    background:rgba(34,211,238,.06);display:flex;align-items:center;justify-content:center;
+    cursor:crosshair;transition:all .2s;z-index:5;
+  }
+  .dz:hover:not(.filled){border-color:rgba(34,211,238,.8);background:rgba(34,211,238,.15);}
+  .dz.over{border-color:var(--cyan);background:rgba(34,211,238,.25);border-style:solid;transform:scale(1.05);}
+  .dz.filled{border-style:solid;cursor:default;}
+  .dz.filled.ok{border-color:var(--green);background:rgba(74,222,128,.12);}
+  .dz-hint{font-size:9px;font-weight:800;color:rgba(34,211,238,.5);text-align:center;line-height:1.3;padding:2px;}
+  .dz-text{font-size:11px;font-weight:900;text-align:center;padding:4px;}
+  .dz.filled.ok .dz-text{color:var(--green);}
+
+  /* WRONG shake */
+  .dz.wrong{animation:dzWrong .4s ease;border-color:var(--red);background:rgba(248,113,113,.1);}
+  @keyframes dzWrong{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+  /* ARROW LINES (SVG overlay) */
+  #arrow-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;}
+
+  /* TOAST */
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;border:2px solid;border-radius:12px;padding:10px 20px;font-size:13px;font-weight:800;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:90vw;}
+  #toast.show{opacity:1;}
+
+  /* WIN */
+  #win{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px;}
+  #win.show{display:flex;}
+  #win .big{font-size:60px;}
+  #win h2{font-size:28px;font-weight:900;color:var(--gold);}
+  #win p{font-size:14px;color:#94a3b8;font-weight:700;max-width:340px;line-height:1.7;}
+  .win-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px;}
+  .wbtn{padding:12px 22px;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;cursor:pointer;transition:transform .1s;}
+  .wbtn:hover{transform:scale(1.05);}
+  .wbtn-gold{background:var(--gold);color:#000;}
+  .wbtn-back{background:rgba(255,255,255,.1);color:#fff;border:2px solid rgba(255,255,255,.2);}
+
+  /* Confetti */
+  @keyframes fall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>🗺️ Elementos del Mapa</h1>
+  <a href="geo-menu.html" class="back-btn">← Geografía</a>
+</div>
+
+<div id="prog-bar">
+  <div id="prog-track"><div id="prog-fill"></div></div>
+  <div id="prog-label">0 de 6</div>
+</div>
+
+<div id="instr">Arrastra cada etiqueta al lugar correcto del mapa 👇</div>
+
+<!-- LABELS TRAY -->
+<div id="labels-tray">
+  <!-- Injected by JS -->
+</div>
+
+<!-- MAP AREA -->
+<div id="map-area">
+  <div id="map-container">
+
+    <!-- MAP SVG — stylized Costa Rica map with labeled elements -->
+    <svg id="map-svg" viewBox="0 0 600 420" xmlns="http://www.w3.org/2000/svg">
+      <!-- Background -->
+      <rect width="600" height="420" fill="#0f2040" rx="12"/>
+      <!-- Ocean -->
+      <rect x="0" y="0" width="600" height="420" fill="#0a1628" rx="12"/>
+      <!-- Land (Costa Rica shape simplified) -->
+      <path d="M180,80 Q200,65 240,70 Q290,60 340,75 Q390,70 420,90 Q450,110 455,140 Q460,170 440,200 Q420,230 400,250 Q370,280 340,300 Q310,320 280,340 Q250,355 220,350 Q190,340 170,315 Q148,285 145,255 Q140,220 150,190 Q160,155 165,120 Z" fill="#1a4a20" stroke="#2d6e2d" stroke-width="2"/>
+      <!-- Ocean label -->
+      <text x="80" y="220" fill="#3a6080" font-size="14" font-weight="bold" font-family="Nunito,sans-serif" opacity="0.6">Océano</text>
+      <text x="80" y="240" fill="#3a6080" font-size="14" font-weight="bold" font-family="Nunito,sans-serif" opacity="0.6">Pacífico</text>
+      <text x="470" y="160" fill="#3a6080" font-size="14" font-weight="bold" font-family="Nunito,sans-serif" opacity="0.6">Mar</text>
+      <text x="460" y="180" fill="#3a6080" font-size="14" font-weight="bold" font-family="Nunito,sans-serif" opacity="0.6">Caribe</text>
+      <!-- Province borders hint -->
+      <path d="M290,90 L285,200 L290,290" stroke="#2d6e2d" stroke-width="1.5" stroke-dasharray="6,4" fill="none" opacity="0.5"/>
+      <path d="M220,120 Q260,110 310,115 Q360,110 400,130" stroke="#2d6e2d" stroke-width="1.5" stroke-dasharray="6,4" fill="none" opacity="0.5"/>
+      <path d="M200,200 Q250,195 300,200 Q360,195 410,210" stroke="#2d6e2d" stroke-width="1.5" stroke-dasharray="6,4" fill="none" opacity="0.5"/>
+      <!-- Grid lines (coordinates hint) -->
+      <line x1="120" y1="0" x2="120" y2="420" stroke="#1e3a5f" stroke-width="1" opacity="0.5"/>
+      <line x1="0" y1="140" x2="600" y2="140" stroke="#1e3a5f" stroke-width="1" opacity="0.5"/>
+      <line x1="0" y1="280" x2="600" y2="280" stroke="#1e3a5f" stroke-width="1" opacity="0.5"/>
+      <line x1="480" y1="0" x2="480" y2="420" stroke="#1e3a5f" stroke-width="1" opacity="0.5"/>
+      <!-- Coord numbers -->
+      <text x="122" y="135" fill="#2a4a6a" font-size="9" font-family="Nunito" opacity="0.7">84°O</text>
+      <text x="122" y="275" fill="#2a4a6a" font-size="9" font-family="Nunito" opacity="0.7">84°O</text>
+      <text x="12" y="143" fill="#2a4a6a" font-size="9" font-family="Nunito" opacity="0.7">10°N</text>
+      <!-- Scale bar area (bottom left) -->
+      <rect x="30" y="360" width="80" height="6" fill="none" stroke="#3a5a7a" stroke-width="2"/>
+      <rect x="30" y="360" width="40" height="6" fill="#3a5a7a"/>
+      <text x="30" y="380" fill="#3a5a7a" font-size="9" font-family="Nunito" opacity="0.8">0    50km</text>
+      <!-- Source area (bottom) -->
+      <text x="200" y="410" fill="#2a4a6a" font-size="8" font-family="Nunito" opacity="0.6">Fuente: Instituto Geográfico Nacional, 2024</text>
+      <!-- Legend/Symbology area (right) -->
+      <rect x="500" y="240" width="88" height="80" fill="#0d1a2e" stroke="#1e3a5f" stroke-width="1.5" rx="6" opacity="0.8"/>
+      <rect x="508" y="254" width="12" height="12" fill="#1a4a20"/>
+      <text x="524" y="264" fill="#3a6080" font-size="8" font-family="Nunito">Tierras</text>
+      <rect x="508" y="272" width="12" height="12" fill="#0a1628"/>
+      <text x="524" y="282" fill="#3a6080" font-size="8" font-family="Nunito">Mar</text>
+      <line x1="508" y1="295" x2="520" y2="295" stroke="#2d6e2d" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <text x="524" y="299" fill="#3a6080" font-size="8" font-family="Nunito">Límite</text>
+      <!-- Title area (top center) -->
+      <rect x="160" y="8" width="280" height="30" fill="#0d1a2e" stroke="#1e3a5f" stroke-width="1.5" rx="6" opacity="0.9"/>
+      <text x="300" y="28" text-anchor="middle" fill="#4488aa" font-size="12" font-family="Nunito" font-weight="bold">REPÚBLICA DE COSTA RICA</text>
+      <!-- Compass rose area (top right) -->
+      <g transform="translate(540,60)">
+        <line x1="0" y1="-22" x2="0" y2="22" stroke="#3a5a7a" stroke-width="2"/>
+        <line x1="-22" y1="0" x2="22" y2="0" stroke="#3a5a7a" stroke-width="2"/>
+        <polygon points="0,-20 -5,-8 0,-12 5,-8" fill="#4488aa"/>
+        <text x="0" y="-24" text-anchor="middle" fill="#4488aa" font-size="10" font-family="Nunito" font-weight="bold">N</text>
+      </g>
+    </svg>
+
+    <!-- SVG overlay for arrows -->
+    <svg id="arrow-svg"></svg>
+
+    <!-- DROP ZONES (positioned absolutely over SVG) -->
+    <!-- Título: top center -->
+    <div class="dz" id="dz-titulo"    style="left:27%;top:2%;width:46%;height:8%;"    data-key="titulo">
+      <div class="dz-hint">¿Qué va aquí?</div><div class="dz-text"></div>
+    </div>
+    <!-- Rosa de los vientos: top right -->
+    <div class="dz" id="dz-rosa"      style="right:2%;top:6%;width:16%;height:18%;"   data-key="rosa">
+      <div class="dz-hint">¿Qué va aquí?</div><div class="dz-text"></div>
+    </div>
+    <!-- Simbología: right side -->
+    <div class="dz" id="dz-simbologia" style="right:2%;top:54%;width:16%;height:20%;" data-key="simbologia">
+      <div class="dz-hint">¿Qué va aquí?</div><div class="dz-text"></div>
+    </div>
+    <!-- Escala: bottom left -->
+    <div class="dz" id="dz-escala"    style="left:2%;bottom:5%;width:18%;height:10%;" data-key="escala">
+      <div class="dz-hint">¿Qué va aquí?</div><div class="dz-text"></div>
+    </div>
+    <!-- Fuente: bottom center -->
+    <div class="dz" id="dz-fuente"    style="left:26%;bottom:1%;width:48%;height:7%;" data-key="fuente">
+      <div class="dz-hint">¿Qué va aquí?</div><div class="dz-text"></div>
+    </div>
+    <!-- Coordenadas: left/grid lines -->
+    <div class="dz" id="dz-coordenadas" style="left:0%;top:30%;width:22%;height:12%;" data-key="coordenadas">
+      <div class="dz-hint">¿Qué va aquí?</div><div class="dz-text"></div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div id="win">
+  <div class="big">🏆🗺️🏆</div>
+  <h2>¡Mapa Completo!</h2>
+  <p>¡Excelente, Daniel! Ya conoces todos los elementos de un mapa. ¡Eres un geógrafo! 🌍</p>
+  <div class="win-btns">
+    <button class="wbtn wbtn-gold" onclick="resetGame()">🔄 Jugar de nuevo</button>
+    <button class="wbtn wbtn-back" onclick="window.location.href='geo-menu.html'">← Geografía</button>
+  </div>
+</div>
+
+<script>
+const LABELS = [
+  { key:'titulo',      text:'📌 Título',                    color:'#22d3ee', border:'#0e7490',
+    fact:'El TÍTULO dice el nombre del mapa y qué muestra.' },
+  { key:'rosa',        text:'🧭 Rosa de los Vientos',       color:'#a78bfa', border:'#6d28d9',
+    fact:'La ROSA DE LOS VIENTOS muestra los puntos cardinales: N, S, E, O.' },
+  { key:'simbologia',  text:'🔑 Simbología',                color:'#fb923c', border:'#c2410c',
+    fact:'La SIMBOLOGÍA (leyenda) explica qué significan los colores y símbolos.' },
+  { key:'escala',      text:'📏 Escala',                    color:'#4ade80', border:'#15803d',
+    fact:'La ESCALA indica la relación entre el mapa y la realidad.' },
+  { key:'fuente',      text:'📄 Fuente',                    color:'#fbbf24', border:'#b45309',
+    fact:'La FUENTE indica quién creó el mapa y cuándo.' },
+  { key:'coordenadas', text:'🌐 Coordenadas Geográficas',   color:'#f472b6', border:'#be185d',
+    fact:'Las COORDENADAS GEOGRÁFICAS son las líneas de latitud y longitud.' },
+];
+
+let placed = 0;
+let dragKey = null, touchKey = null, touchClone = null;
+
+function buildTray() {
+  const tray = document.getElementById('labels-tray');
+  tray.innerHTML = '';
+  [...LABELS].sort(()=>Math.random()-.5).forEach(l => {
+    const el = document.createElement('div');
+    el.className = 'label-chip';
+    el.id = `chip-${l.key}`;
+    el.dataset.key = l.key;
+    el.textContent = l.text;
+    el.style.color = l.color;
+    el.style.borderColor = l.border;
+    el.draggable = true;
+    el.addEventListener('dragstart', e => { dragKey=l.key; el.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
+    el.addEventListener('dragend',   () => { el.classList.remove('dragging'); dragKey=null; clearOver(); });
+    tray.appendChild(el);
+  });
+}
+
+function setupZones() {
+  document.querySelectorAll('.dz').forEach(z => {
+    z.addEventListener('dragover',  e => { e.preventDefault(); if(!z.classList.contains('filled')) z.classList.add('over'); });
+    z.addEventListener('dragleave', () => z.classList.remove('over'));
+    z.addEventListener('drop', e => { e.preventDefault(); z.classList.remove('over'); tryPlace(z); });
+  });
+}
+
+function clearOver() { document.querySelectorAll('.dz').forEach(z=>z.classList.remove('over')); }
+
+function tryPlace(zone) {
+  if(!dragKey||zone.classList.contains('filled')) return;
+  const label = LABELS.find(l=>l.key===dragKey);
+  if(label && dragKey===zone.dataset.key) {
+    doPlace(zone, label);
+  } else {
+    zone.classList.add('wrong');
+    setTimeout(()=>zone.classList.remove('wrong'),500);
+    showToast('❌ No va ahí — ¡sigue intentando!', '#f87171');
+  }
+}
+
+function doPlace(zone, label) {
+  zone.classList.add('filled','ok');
+  zone.querySelector('.dz-hint').style.display='none';
+  const t = zone.querySelector('.dz-text');
+  t.textContent = label.text; t.style.color = label.color;
+  document.getElementById(`chip-${label.key}`).classList.add('placed');
+  placed++;
+  document.getElementById('prog-fill').style.width=(placed/6*100)+'%';
+  document.getElementById('prog-label').textContent=`${placed} de 6`;
+  showToast(`✅ ${label.text} — ${label.fact}`, '#4ade80');
+  if(placed===6) setTimeout(showWin,1000);
+}
+
+let toastT;
+function showToast(msg,color){
+  const t=document.getElementById('toast'); t.textContent=msg; t.style.borderColor=color; t.style.color=color;
+  t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function showWin(){
+  document.getElementById('win').classList.add('show');
+  const cols=['#22d3ee','#fbbf24','#4ade80','#a78bfa','#f472b6','#fb923c'];
+  for(let i=0;i<60;i++){
+    const el=document.createElement('div'); const c=cols[Math.floor(Math.random()*cols.length)];
+    Object.assign(el.style,{position:'fixed',left:Math.random()*100+'vw',top:'-20px',width:(5+Math.random()*8)+'px',height:(5+Math.random()*8)+'px',background:c,borderRadius:Math.random()>.5?'50%':'2px',zIndex:'400',pointerEvents:'none',animation:`fall ${1.5+Math.random()*2}s linear ${Math.random()*1.2}s forwards`});
+    document.body.appendChild(el); setTimeout(()=>el.remove(),4500);
+  }
+}
+
+function resetGame(){
+  placed=0; dragKey=null;
+  document.getElementById('win').classList.remove('show');
+  document.getElementById('prog-fill').style.width='0%';
+  document.getElementById('prog-label').textContent='0 de 6';
+  document.querySelectorAll('.dz').forEach(z=>{
+    z.classList.remove('filled','ok','wrong');
+    z.querySelector('.dz-hint').style.display='';
+    z.querySelector('.dz-text').textContent='';
+  });
+  buildTray(); setupZones();
+}
+
+// TOUCH
+document.addEventListener('touchstart',e=>{
+  const c=e.target.closest('.label-chip'); if(!c||c.classList.contains('placed'))return;
+  e.preventDefault(); touchKey=c.dataset.key;
+  const r=c.getBoundingClientRect(); touchClone=c.cloneNode(true);
+  Object.assign(touchClone.style,{position:'fixed',width:r.width+'px',opacity:'.85',zIndex:'999',pointerEvents:'none',borderRadius:'100px',top:r.top+'px',left:r.left+'px'});
+  document.body.appendChild(touchClone); c.classList.add('dragging');
+},{passive:false});
+
+document.addEventListener('touchmove',e=>{
+  if(!touchClone)return; e.preventDefault();
+  const t=e.touches[0];
+  touchClone.style.left=(t.clientX-60)+'px'; touchClone.style.top=(t.clientY-20)+'px';
+  clearOver();
+  const el=document.elementFromPoint(t.clientX,t.clientY);
+  const z=el?.closest('.dz'); if(z&&!z.classList.contains('filled')) z.classList.add('over');
+},{passive:false});
+
+document.addEventListener('touchend',e=>{
+  if(!touchClone||!touchKey)return;
+  const t=e.changedTouches[0]; touchClone.remove(); touchClone=null;
+  document.getElementById(`chip-${touchKey}`)?.classList.remove('dragging');
+  clearOver();
+  const el=document.elementFromPoint(t.clientX,t.clientY);
+  const z=el?.closest('.dz'); if(z&&!z.classList.contains('filled')){ dragKey=touchKey; tryPlace(z); }
+  touchKey=null; dragKey=null;
+});
+
+buildTray(); setupZones();
+</script>
+</body>
+</html>

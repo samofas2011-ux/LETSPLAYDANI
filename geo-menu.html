@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geografía 🌍</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+  :root{--bg:#050e1a;--card:#0a1628;--text:#f0f9ff;--sub:#4a6a8a;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 20% 30%,rgba(56,189,248,.07) 0,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 70%,rgba(251,191,36,.05) 0,transparent 60%);pointer-events:none;}
+
+  .back{position:fixed;top:20px;left:20px;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);color:#94a3b8;padding:8px 16px;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;text-decoration:none;transition:all .2s;}
+  .back:hover{background:rgba(255,255,255,.15);color:#fff;}
+
+  header{text-align:center;margin-bottom:40px;}
+  .badge{display:inline-block;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);border-radius:100px;padding:5px 16px;font-size:11px;font-weight:800;letter-spacing:2px;color:#fbbf24;text-transform:uppercase;margin-bottom:14px;}
+  h1{font-size:clamp(26px,5vw,44px);font-weight:900;background:linear-gradient(135deg,#fff,#38bdf8 50%,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;}
+  .sub{font-size:15px;color:var(--sub);font-weight:700;}
+
+  .cards{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;max-width:860px;}
+
+  .card{background:var(--card);border:3px solid;border-radius:20px;padding:28px 24px;cursor:pointer;text-decoration:none;color:var(--text);display:flex;flex-direction:column;align-items:center;gap:12px;width:250px;text-align:center;transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;position:relative;overflow:hidden;animation:cardIn .5s ease backwards;}
+  .card:nth-child(1){animation-delay:.1s}.card:nth-child(2){animation-delay:.22s}.card:nth-child(3){animation-delay:.34s}
+  @keyframes cardIn{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .card:hover{transform:translateY(-8px) scale(1.03);}
+  .card:active{transform:scale(.97);}
+  .card::before{content:'';position:absolute;inset:0;border-radius:18px;opacity:0;transition:opacity .3s;}
+  .card:hover::before{opacity:1;}
+
+  .c1{border-color:#22d3ee;}.c1::before{background:linear-gradient(135deg,rgba(34,211,238,.07),transparent);}.c1:hover{box-shadow:0 20px 50px rgba(34,211,238,.25);}
+  .c2{border-color:#4ade80;}.c2::before{background:linear-gradient(135deg,rgba(74,222,128,.07),transparent);}.c2:hover{box-shadow:0 20px 50px rgba(74,222,128,.25);}
+  .c3{border-color:#38bdf8;}.c3::before{background:linear-gradient(135deg,rgba(56,189,248,.07),transparent);}.c3:hover{box-shadow:0 20px 50px rgba(56,189,248,.25);}
+
+  .emoji{font-size:56px;line-height:1;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4));}
+  .card-title{font-size:18px;font-weight:900;}
+  .c1 .card-title{color:#67e8f9;}.c2 .card-title{color:#86efac;}.c3 .card-title{color:#7dd3fc;}
+  .card-desc{font-size:12px;color:var(--sub);font-weight:700;line-height:1.6;}
+  .pills{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+  .pill{font-size:10px;font-weight:800;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);padding:3px 10px;border-radius:100px;color:#64748b;}
+  .cta{font-size:13px;font-weight:900;padding:9px 18px;border-radius:10px;margin-top:4px;}
+  .c1 .cta{background:rgba(34,211,238,.15);color:#67e8f9;}
+  .c2 .cta{background:rgba(74,222,128,.15);color:#86efac;}
+  .c3 .cta{background:rgba(56,189,248,.15);color:#7dd3fc;}
+</style>
+</head>
+<body>
+<a href="menu.html" class="back">← Menú</a>
+
+<header>
+  <div class="badge">🌍 Estudios Sociales — Geografía</div>
+  <h1>¡Explora el Mundo,<br>Daniel! 🌎</h1>
+  <p class="sub">Elige el tema que quieres practicar</p>
+</header>
+
+<div class="cards">
+
+  <a href="geo-mapa.html" class="card c1">
+    <div class="emoji">🗺️</div>
+    <div class="card-title">Elementos del Mapa</div>
+    <div class="card-desc">Aprende qué tiene un mapa: título, escala, simbología, fuente y más. ¡Arrastra las etiquetas!</div>
+    <div class="pills"><span class="pill">6 elementos</span><span class="pill">Arrastra y coloca</span></div>
+    <div class="cta">🗺️ ¡Etiquetar mapa!</div>
+  </a>
+
+  <a href="geo-cardinales.html" class="card c2">
+    <div class="emoji">🧭</div>
+    <div class="card-title">Puntos Cardinales</div>
+    <div class="card-desc">Domina la brújula: Norte, Sur, Este, Oeste y los puntos intermedios NE, NO, SE, SO.</div>
+    <div class="pills"><span class="pill">🧭 Brújula interactiva</span><span class="pill">10 preguntas</span></div>
+    <div class="cta">🧭 ¡Orientarse!</div>
+  </a>
+
+  <a href="geo-coordenadas.html" class="card c3">
+    <div class="emoji">🌐</div>
+    <div class="card-title">Coordenadas Geográficas</div>
+    <div class="card-desc">Paralelos, meridianos, latitud y longitud. ¡El sistema que usa el GPS para encontrar cualquier lugar!</div>
+    <div class="pills"><span class="pill">🌐 3 secciones</span><span class="pill">12 preguntas</span><span class="pill">Quiz interactivo</span></div>
+    <div class="cta">🌐 ¡Localizar lugares!</div>
+  </a>
+
+</div>
+</body>
+</html>

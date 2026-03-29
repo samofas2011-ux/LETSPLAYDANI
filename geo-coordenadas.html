@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coordenadas Geográficas 🌐</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+  :root{--bg:#00101a;--panel:#001828;--border:#003050;--blue:#38bdf8;--orange:#fb923c;--gold:#fbbf24;--green:#4ade80;--red:#f87171;--text:#f0f9ff;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 20%,rgba(56,189,248,.07) 0,transparent 70%);pointer-events:none;}
+
+  /* HEADER */
+  #header{background:rgba(0,10,26,.95);border-bottom:3px solid var(--blue);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0;}
+  #header h1{font-size:clamp(13px,2.2vw,18px);font-weight:900;color:var(--blue);}
+  .back-btn{background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);color:#94a3b8;padding:7px 14px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;text-decoration:none;font-family:'Nunito',sans-serif;transition:all .2s;}
+  .back-btn:hover{background:rgba(255,255,255,.18);color:#fff;}
+
+  /* TABS / SECTIONS */
+  #section-tabs{display:flex;background:var(--panel);border-bottom:2px solid var(--border);}
+  .stab{flex:1;padding:10px;text-align:center;font-weight:900;font-size:11px;cursor:pointer;color:#4a7a9a;border-bottom:3px solid transparent;transition:all .2s;}
+  .stab.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+  /* PROGRESS */
+  #prog-bar{background:var(--panel);border-bottom:2px solid var(--border);padding:6px 20px;display:flex;align-items:center;gap:12px;}
+  #prog-track{flex:1;height:10px;background:var(--border);border-radius:5px;overflow:hidden;}
+  #prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--orange));border-radius:5px;width:0%;transition:width .5s;}
+  #prog-label{font-size:11px;font-weight:900;color:var(--gold);white-space:nowrap;}
+
+  /* GAME AREA */
+  #game-area{flex:1;display:flex;flex-direction:column;align-items:center;padding:16px;gap:16px;overflow-y:auto;}
+
+  /* GLOBE VISUAL */
+  #globe-container{width:min(300px,85vw);height:min(300px,85vw);position:relative;flex-shrink:0;}
+  #globe-svg{width:100%;height:100%;}
+
+  /* QUESTION CARD */
+  #q-card{background:var(--panel);border:3px solid var(--border);border-radius:16px;padding:16px 20px;max-width:500px;width:100%;text-align:center;}
+  #q-section{font-size:9px;color:#4a7a9a;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+  #q-text{font-size:clamp(14px,2.5vw,20px);font-weight:900;color:var(--text);line-height:1.5;margin-bottom:8px;}
+  #q-hint-text{font-size:11px;color:#4a7a9a;}
+
+  /* OPTIONS */
+  #options-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:500px;width:100%;}
+  .opt-btn{
+    background:var(--panel);border:2px solid var(--border);
+    border-radius:14px;padding:14px 12px;
+    font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;
+    color:var(--text);cursor:pointer;text-align:center;
+    transition:all .2s;line-height:1.3;
+  }
+  .opt-btn:hover{background:rgba(56,189,248,.1);border-color:var(--blue);color:var(--blue);}
+  .opt-btn.correct{background:rgba(74,222,128,.2)!important;border-color:var(--green)!important;color:var(--green)!important;animation:optPop .4s ease;}
+  .opt-btn.wrong  {background:rgba(248,113,113,.15)!important;border-color:var(--red)!important;  color:var(--red)!important;  animation:optShake .4s ease;}
+  @keyframes optPop{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+  @keyframes optShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+  /* SCORE ROW */
+  #score-row{display:flex;justify-content:center;gap:24px;background:var(--panel);border-bottom:2px solid var(--border);padding:6px 20px;font-size:12px;font-weight:900;flex-wrap:wrap;gap:16px;}
+  .sc{display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .sc-label{font-size:8px;color:#4a7a9a;letter-spacing:2px;text-transform:uppercase;}
+  #sc-correct{color:var(--green);}#sc-wrong{color:var(--red);}#sc-left{color:var(--gold);}
+
+  /* FACT BOX */
+  #fact-box{background:var(--panel);border:2px solid var(--border);border-radius:12px;padding:12px 18px;max-width:500px;width:100%;font-size:13px;font-weight:700;color:#4a7a9a;text-align:center;min-height:44px;line-height:1.5;}
+
+  /* TOAST */
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg);border:2px solid;border-radius:12px;padding:10px 20px;font-size:13px;font-weight:800;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:90vw;}
+  #toast.show{opacity:1;}
+
+  /* WIN */
+  #win{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px;}
+  #win.show{display:flex;}
+  #win .big{font-size:60px;}
+  #win h2{font-size:26px;font-weight:900;color:var(--blue);}
+  #win p{font-size:14px;color:#4a7a9a;font-weight:700;max-width:340px;line-height:1.7;}
+  .win-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px;}
+  .wbtn{padding:12px 22px;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;cursor:pointer;transition:transform .1s;}
+  .wbtn:hover{transform:scale(1.05);}
+  .wbtn-blue{background:var(--blue);color:#000;}
+  .wbtn-back{background:rgba(255,255,255,.1);color:#fff;border:2px solid rgba(255,255,255,.2);}
+  @keyframes fall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>🌐 Coordenadas Geográficas</h1>
+  <a href="geo-menu.html" class="back-btn">← Geografía</a>
+</div>
+
+<div id="section-tabs">
+  <div class="stab active" onclick="setSection(0)">🌐 Paralelos &amp; Meridianos</div>
+  <div class="stab"        onclick="setSection(1)">📍 Latitud &amp; Longitud</div>
+  <div class="stab"        onclick="setSection(2)">🗺️ Aplica lo aprendido</div>
+</div>
+
+<div id="score-row">
+  <div class="sc"><span class="sc-label">✅ Correctas</span><span id="sc-correct">0</span></div>
+  <div class="sc"><span class="sc-label">❌ Errores</span>  <span id="sc-wrong">0</span></div>
+  <div class="sc"><span class="sc-label">🎯 Restantes</span><span id="sc-left">-</span></div>
+</div>
+
+<div id="prog-bar">
+  <div id="prog-track"><div id="prog-fill"></div></div>
+  <div id="prog-label">0 de 12</div>
+</div>
+
+<div id="game-area">
+  <!-- Globe -->
+  <div id="globe-container">
+    <svg id="globe-svg" viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg">
+      <!-- Ocean bg -->
+      <circle cx="140" cy="140" r="130" fill="#00101a" stroke="#003050" stroke-width="3"/>
+      <!-- Globe glow -->
+      <circle cx="140" cy="140" r="130" fill="none" stroke="#38bdf8" stroke-width="1" opacity="0.3"/>
+      <!-- Parallels (latitude lines) -->
+      <ellipse cx="140" cy="70"  rx="115" ry="18" fill="none" stroke="#003870" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <ellipse cx="140" cy="100" rx="128" ry="26" fill="none" stroke="#004890" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <!-- Equator (bold) -->
+      <ellipse cx="140" cy="140" rx="130" ry="32" fill="none" stroke="#ef4444" stroke-width="2.5"/>
+      <text x="274" y="145" fill="#ef4444" font-size="9" font-family="Nunito" font-weight="bold">Ecuador</text>
+      <ellipse cx="140" cy="180" rx="128" ry="26" fill="none" stroke="#004890" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <ellipse cx="140" cy="210" rx="115" ry="18" fill="none" stroke="#003870" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <!-- Tropics -->
+      <ellipse cx="140" cy="108" rx="126" ry="24" fill="none" stroke="#f97316" stroke-width="1.5"/>
+      <text x="270" y="113" fill="#f97316" font-size="8" font-family="Nunito">Cáncer</text>
+      <ellipse cx="140" cy="172" rx="126" ry="24" fill="none" stroke="#f97316" stroke-width="1.5"/>
+      <text x="268" y="177" fill="#f97316" font-size="8" font-family="Nunito">Capricornio</text>
+      <!-- Meridians (longitude lines) -->
+      <ellipse cx="140" cy="140" rx="20" ry="130" fill="none" stroke="#002850" stroke-width="1" stroke-dasharray="4,5"/>
+      <ellipse cx="140" cy="140" rx="60" ry="130" fill="none" stroke="#002850" stroke-width="1" stroke-dasharray="4,5"/>
+      <ellipse cx="140" cy="140" rx="100" ry="130" fill="none" stroke="#002850" stroke-width="1" stroke-dasharray="4,5"/>
+      <!-- Greenwich Meridian (highlighted) -->
+      <line x1="140" y1="10" x2="140" y2="270" stroke="#22c55e" stroke-width="2.5"/>
+      <text x="142" y="22" fill="#22c55e" font-size="8" font-family="Nunito" font-weight="bold">Greenwich 0°</text>
+      <!-- Poles -->
+      <circle cx="140" cy="12" r="4" fill="#38bdf8"/>
+      <text x="148" y="16" fill="#38bdf8" font-size="8" font-family="Nunito">Polo N</text>
+      <circle cx="140" cy="268" r="4" fill="#38bdf8"/>
+      <text x="148" y="272" fill="#38bdf8" font-size="8" font-family="Nunito">Polo S</text>
+      <!-- Labels: N/S arrows -->
+      <text x="108" y="16" fill="#38bdf8" font-size="11" font-family="Nunito" font-weight="bold">N</text>
+      <text x="108" y="278" fill="#38bdf8" font-size="11" font-family="Nunito" font-weight="bold">S</text>
+      <text x="10"  y="148" fill="#38bdf8" font-size="11" font-family="Nunito" font-weight="bold">O</text>
+      <text x="258" y="148" fill="#38bdf8" font-size="11" font-family="Nunito" font-weight="bold">E</text>
+      <!-- Lat/Lon labels on globe -->
+      <text x="50" y="75"  fill="#38bdf8" font-size="9" font-family="Nunito" opacity="0.7">60°N</text>
+      <text x="50" y="113" fill="#38bdf8" font-size="9" font-family="Nunito" opacity="0.7">23°N</text>
+      <text x="50" y="173" fill="#38bdf8" font-size="9" font-family="Nunito" opacity="0.7">23°S</text>
+      <text x="50" y="215" fill="#38bdf8" font-size="9" font-family="Nunito" opacity="0.7">60°S</text>
+      <!-- Latitud arrow -->
+      <defs><marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#38bdf8"/></marker></defs>
+      <line x1="40" y1="90" x2="40" y2="185" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#arr)" marker-start="url(#arr)" opacity="0.5"/>
+      <text x="12" y="142" fill="#38bdf8" font-size="8" font-family="Nunito" font-weight="bold" opacity="0.7" writing-mode="tb">LATITUD</text>
+    </svg>
+  </div>
+
+  <div id="q-card">
+    <div id="q-section"></div>
+    <div id="q-text">Cargando...</div>
+    <div id="q-hint-text"></div>
+  </div>
+
+  <div id="options-grid"></div>
+
+  <div id="fact-box">Selecciona la respuesta correcta 🌐</div>
+</div>
+
+<div id="toast"></div>
+
+<div id="win">
+  <div class="big">🏆🌐🏆</div>
+  <h2 id="win-title">¡Geógrafo Experto!</h2>
+  <p id="win-msg">¡Increíble, Daniel! Ya dominas las coordenadas geográficas. ¡Podrías ser navegante! ⛵</p>
+  <div class="win-btns">
+    <button class="wbtn wbtn-blue" onclick="startGame()">🔄 Jugar de nuevo</button>
+    <button class="wbtn wbtn-back" onclick="window.location.href='geo-menu.html'">← Geografía</button>
+  </div>
+</div>
+
+<script>
+// ── ALL QUESTIONS ──────────────────────────────────────────
+const SECTIONS = [
+  { label:'🌐 Paralelos y Meridianos', qs:[
+    { q:'¿Qué son los PARALELOS?', opts:['Líneas horizontales que rodean la Tierra de Este a Oeste','Líneas verticales de polo a polo','Líneas diagonales del Ecuador','Las fronteras de los países'], ans:0, fact:'Los PARALELOS son círculos imaginarios horizontales que rodean la Tierra paralelos al Ecuador.' },
+    { q:'¿Qué son los MERIDIANOS?', opts:['Líneas que van del Norte al Sur (de polo a polo)','Líneas horizontales del Ecuador','Las capitales de los países','Los ríos del mundo'], ans:0, fact:'Los MERIDIANOS son semicircunferencias que van de polo a polo, de Norte a Sur.' },
+    { q:'¿Cuál es el PARALELO más importante?', opts:['El Ecuador (0°)','El Trópico de Cáncer','El Meridiano de Greenwich','El Círculo Polar Ártico'], ans:0, fact:'El ECUADOR es el paralelo principal. Divide la Tierra en Hemisferio Norte y Hemisferio Sur.' },
+    { q:'¿Cuál es el MERIDIANO más importante o de referencia?', opts:['El Meridiano de Greenwich (0°)','El Meridiano de Madrid','El Meridiano del Ecuador','El Meridiano de San José'], ans:0, fact:'El MERIDIANO DE GREENWICH es el meridiano cero (0°). Fue establecido en 1884 como referencia mundial.' },
+  ]},
+  { label:'📍 Latitud y Longitud', qs:[
+    { q:'¿Qué mide la LATITUD?', opts:['La distancia al Norte o Sur del Ecuador','La distancia al Este u Oeste de Greenwich','La altura de las montañas','El tamaño de los países'], ans:0, fact:'La LATITUD mide qué tan lejos estás del Ecuador hacia el Norte o el Sur. Se mide en grados (0° a 90°).' },
+    { q:'¿Qué mide la LONGITUD?', opts:['La distancia al Este u Oeste del Meridiano de Greenwich','La distancia al Norte del Ecuador','La temperatura del lugar','El tamaño del océano'], ans:0, fact:'La LONGITUD mide qué tan lejos estás del Meridiano de Greenwich hacia el Este o el Oeste (0° a 180°).' },
+    { q:'¿Cuántos grados tiene la latitud desde el Ecuador hasta los polos?', opts:['90 grados','180 grados','45 grados','360 grados'], ans:0, fact:'La latitud va de 0° (Ecuador) hasta 90° Norte (Polo Norte) o 90° Sur (Polo Sur).' },
+    { q:'Las líneas de LATITUD también se llaman...', opts:['Paralelos','Meridianos','Continentes','Coordenadas'], ans:0, fact:'Las líneas de latitud = PARALELOS. Las líneas de longitud = MERIDIANOS. ¡No los confundas!' },
+  ]},
+  { label:'🗺️ Aplica lo aprendido', qs:[
+    { q:'Para ubicar un lugar exacto en el mapa necesito...', opts:['Latitud + Longitud juntas','Solo el nombre del país','Solo la latitud','Solo la longitud'], ans:0, fact:'¡Necesito LATITUD y LONGITUD juntas para ubicar cualquier punto exacto en la Tierra. ¡Como las coordenadas de un GPS!' },
+    { q:'El GPS de tu celular usa coordenadas de...', opts:['Latitud y Longitud','Paralelos y Ríos','Norte y Sur solamente','Ciudades y países'], ans:0, fact:'¡Tu GPS usa LATITUD y LONGITUD! Las coordenadas geográficas son la base de toda la navegación moderna.' },
+    { q:'Costa Rica está ubicada aproximadamente a...', opts:['10° Norte de Latitud y 84° Oeste de Longitud','50° Sur y 30° Este','0° en el Ecuador','90° Norte en el Polo'], ans:0, fact:'¡Costa Rica está en 10°N, 84°O aproximadamente! Eso la ubica en América Central, cerca del Ecuador.' },
+    { q:'¿Qué divide el Trópico de Cáncer y el Trópico de Capricornio?', opts:['La zona tropical del planeta','Los hemisferios Este y Oeste','Los polos Norte y Sur','Los continentes'], ans:0, fact:'Entre el Trópico de Cáncer (23°N) y el Trópico de Capricornio (23°S) está la ZONA TROPICAL. ¡Costa Rica está en esa zona!' },
+  ]},
+];
+
+let allQ=[], idx=0, correct=0, wrong=0, answering=true, currentSection=0;
+const TOTAL=12;
+
+function setSection(s){
+  currentSection=s;
+  document.querySelectorAll('.stab').forEach((t,i)=>t.classList.toggle('active',i===s));
+  startGame();
+}
+
+function buildPool(){
+  allQ=[]; idx=0; correct=0; wrong=0; answering=true;
+  // Use questions from selected section or all
+  SECTIONS.forEach(sec=>allQ.push(...sec.qs.map(q=>({...q,section:sec.label}))));
+  allQ=allQ.sort(()=>Math.random()-.5);
+  // Limit to one section if selected
+  if(currentSection<3) allQ=SECTIONS[currentSection].qs.map(q=>({...q,section:SECTIONS[currentSection].label})).sort(()=>Math.random()-.5);
+  updateScore();
+}
+
+function loadQuestion(){
+  if(idx>=allQ.length){ setTimeout(showWin,400); return; }
+  const q=allQ[idx]; answering=true;
+  document.getElementById('q-section').textContent=q.section||'';
+  document.getElementById('q-text').textContent=q.q;
+  document.getElementById('q-hint-text').textContent='';
+  document.getElementById('fact-box').textContent='Selecciona la respuesta correcta 🌐';
+  document.getElementById('fact-box').style.color='';
+  document.getElementById('prog-fill').style.width=(idx/allQ.length*100)+'%';
+  document.getElementById('prog-label').textContent=`${idx} de ${allQ.length}`;
+
+  const grid=document.getElementById('options-grid');
+  grid.innerHTML='';
+  q.opts.forEach((opt,i)=>{
+    const btn=document.createElement('button'); btn.className='opt-btn';
+    btn.textContent=opt; btn.dataset.idx=i;
+    btn.addEventListener('click',()=>answer(i,btn,q));
+    grid.appendChild(btn);
+  });
+}
+
+function answer(chosen, btn, q){
+  if(!answering) return; answering=false;
+  document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+  if(chosen===q.ans){
+    btn.classList.add('correct'); correct++; updateScore();
+    document.getElementById('fact-box').textContent='✅ '+q.fact;
+    document.getElementById('fact-box').style.color='#4ade80';
+    showToast('✅ ¡Correcto!','#4ade80');
+    playSound('ok');
+  } else {
+    btn.classList.add('wrong'); wrong++; updateScore();
+    document.querySelectorAll('.opt-btn')[q.ans].classList.add('correct');
+    document.getElementById('fact-box').textContent='❌ '+q.fact;
+    document.getElementById('fact-box').style.color='#f87171';
+    showToast('❌ ¡Inténtalo!','#f87171');
+    playSound('fail');
+  }
+  idx++;
+  document.getElementById('prog-fill').style.width=(idx/allQ.length*100)+'%';
+  document.getElementById('prog-label').textContent=`${idx} de ${allQ.length}`;
+  setTimeout(loadQuestion,1800);
+}
+
+function updateScore(){
+  document.getElementById('sc-correct').textContent=correct;
+  document.getElementById('sc-wrong').textContent=wrong;
+  document.getElementById('sc-left').textContent=Math.max(0,allQ.length-idx);
+}
+
+function showWin(){
+  const perfect=wrong===0;
+  document.getElementById('win-title').textContent=perfect?'¡PERFECTO, DANIEL! ⭐':'¡Geógrafo Experto!';
+  document.getElementById('win-msg').textContent=perfect
+    ?'¡Sin ningún error! Eres un experto en coordenadas geográficas. ¡Podrías programar un GPS! 🌐'
+    :`Tuviste ${wrong} error${wrong!==1?'es':''}. ¡Practica y lo logras perfecto!`;
+  document.getElementById('win').classList.add('show'); confetti();
+}
+
+function startGame(){
+  document.getElementById('win').classList.remove('show');
+  buildPool(); loadQuestion();
+}
+
+function confetti(){
+  const cols=['#38bdf8','#fb923c','#fbbf24','#4ade80','#fff'];
+  for(let i=0;i<60;i++){
+    const el=document.createElement('div'); const c=cols[Math.floor(Math.random()*cols.length)];
+    Object.assign(el.style,{position:'fixed',left:Math.random()*100+'vw',top:'-20px',width:(5+Math.random()*8)+'px',height:(5+Math.random()*8)+'px',background:c,borderRadius:Math.random()>.5?'50%':'2px',zIndex:'400',pointerEvents:'none',animation:`fall ${1.5+Math.random()*2}s linear ${Math.random()*1.2}s forwards`});
+    document.body.appendChild(el); setTimeout(()=>el.remove(),4500);
+  }
+}
+
+let toastT;
+function showToast(msg,color){
+  const t=document.getElementById('toast'); t.textContent=msg; t.style.borderColor=color; t.style.color=color;
+  t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1400);
+}
+
+function playSound(type){
+  try{
+    const c=new(window.AudioContext||window.webkitAudioContext)();
+    if(type==='ok'){[[523,0],[659,.1],[784,.2]].forEach(([f,d])=>{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='square';o.frequency.value=f;const t=c.currentTime+d;g.gain.setValueAtTime(.1,t);g.gain.exponentialRampToValueAtTime(.001,t+.18);o.start(t);o.stop(t+.18);});}
+    else{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type='sawtooth';o.frequency.setValueAtTime(300,c.currentTime);o.frequency.exponentialRampToValueAtTime(80,c.currentTime+.25);g.gain.setValueAtTime(.1,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.25);o.start();o.stop(c.currentTime+.25);}
+  }catch(e){}
+}
+
+startGame();
+</script>
+</body>
+</html>
